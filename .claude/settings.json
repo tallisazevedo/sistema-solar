@@ -16,5 +16,19 @@
       "Bash(git push:*)",
       "Bash(dotnet ef database drop:*)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/bloquear-pii-fixtures.js",
+            "statusMessage": "Checando fixtures/ contra dado pessoal real..."
+          }
+        ]
+      }
+    ]
   }
 }
