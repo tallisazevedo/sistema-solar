@@ -1,0 +1,7 @@
+[*.cs]
+# Codigo gerado pelo "dotnet ef migrations add" - nao é mantido a mao e sera
+# regenerado a cada nova migration; nao faz sentido aplicar os analisadores do
+# Directory.Build.props aqui.
+generated_code = true
+dotnet_diagnostic.CA1825.severity = none
+dotnet_diagnostic.CA1861.severity = none
