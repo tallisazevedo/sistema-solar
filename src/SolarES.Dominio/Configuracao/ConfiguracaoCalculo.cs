@@ -13,4 +13,5 @@ public sealed record ConfiguracaoCalculo(
     Premissa<IReadOnlyList<PercentualFioBAno>> CronogramaFioB,
     Premissa<EstrategiaFioBForaCronograma> EstrategiaFioBForaCronograma,
     Premissa<decimal> LimiteKwpRoteamentoHumano,
-    Premissa<ConfiguracaoKitLitoral> KitLitoral);
+    Premissa<ConfiguracaoKitLitoral> KitLitoral,
+    Premissa<CustoDisponibilidade> CustoDisponibilidadePorLigacao);

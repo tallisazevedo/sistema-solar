@@ -89,5 +89,10 @@ public static class ConfiguracaoCalculoBaseline
                 },
                 RaioKm: 5m),
             OrigemPremissa.Provisorio,
-            "Lista literal de municipios candidatos do docs/02 (criterio do dono a validar); raio de 5 km como chute inicial."));
+            "Lista literal de municipios candidatos do docs/02 (criterio do dono a validar); raio de 5 km como chute inicial."),
+
+        CustoDisponibilidadePorLigacao: new Premissa<CustoDisponibilidade>(
+            new CustoDisponibilidade(Monofasica: 30m, Bifasica: 50m, Trifasica: 100m),
+            OrigemPremissa.Lei,
+            "Art. 5 da Lei 14.300/2022 / REN ANEEL 1.059/2023 — valores citados literalmente no docs/02."));
 }
