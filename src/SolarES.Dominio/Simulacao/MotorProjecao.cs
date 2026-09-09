@@ -25,8 +25,8 @@ public static class MotorProjecao
 
         for (var ano = 1; ano <= horizonteAnos; ano++)
         {
-            var fatorDegradacao = Potencia(1m - degradacaoAnual, ano - 1);
-            var fatorInflacao = Potencia(1m + inflacaoTarifaria, ano - 1);
+            var fatorDegradacao = MatematicaFinanceira.Potencia(1m - degradacaoAnual, ano - 1);
+            var fatorInflacao = MatematicaFinanceira.Potencia(1m + inflacaoTarifaria, ano - 1);
             var anoCalendario = anoCalendarioInicial + (ano - 1);
             var percentualFioB = MotorFioB.ResolverPercentualAno(configuracao, anoCalendario);
 
@@ -50,17 +50,6 @@ public static class MotorProjecao
             var economiaLiquidaAnualEmTermosReaisReais = economiaLiquidaAnualReais / fatorInflacao;
 
             resultado.Add(new AnoProjecao(ano, anoCalendario, geracaoAnualKwh, economiaLiquidaAnualReais, economiaLiquidaAnualEmTermosReaisReais));
-        }
-
-        return resultado;
-    }
-
-    private static decimal Potencia(decimal @base, int expoente)
-    {
-        var resultado = 1m;
-        for (var i = 0; i < expoente; i++)
-        {
-            resultado *= @base;
         }
 
         return resultado;
