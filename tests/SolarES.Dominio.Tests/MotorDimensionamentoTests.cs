@@ -40,7 +40,8 @@ public class MotorDimensionamentoTests
         Subgrupo.B1,
         "3205309",
         TipoTelhado.Ceramico,
-        100m);
+        100m,
+        false);
 
     [Theory]
     [InlineData(TipoLigacao.Monofasica, 30)]

@@ -13,7 +13,8 @@ public class MotorGeracaoMensalTests
         Subgrupo.B1,
         "3205309",
         TipoTelhado.Ceramico,
-        100m);
+        100m,
+        false);
 
     [Fact]
     public void Calcular_ComHspVariandoPorMes_ProduzGeracaoDiferenteEntreMeses()

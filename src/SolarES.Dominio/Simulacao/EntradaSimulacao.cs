@@ -8,6 +8,7 @@ public sealed class EntradaSimulacao
     public string MunicipioCodigoIbge { get; }
     public TipoTelhado TipoTelhado { get; }
     public decimal AreaDisponivelM2 { get; }
+    public bool PossuiGeracaoPropria { get; }
 
     public decimal ConsumoMedioMensal => HistoricoConsumoKwh.Average();
 
@@ -17,7 +18,8 @@ public sealed class EntradaSimulacao
         Subgrupo subgrupo,
         string municipioCodigoIbge,
         TipoTelhado tipoTelhado,
-        decimal areaDisponivelM2)
+        decimal areaDisponivelM2,
+        bool possuiGeracaoPropria)
     {
         if (historicoConsumoKwh.Count != 12)
         {
@@ -32,5 +34,6 @@ public sealed class EntradaSimulacao
         MunicipioCodigoIbge = municipioCodigoIbge;
         TipoTelhado = tipoTelhado;
         AreaDisponivelM2 = areaDisponivelM2;
+        PossuiGeracaoPropria = possuiGeracaoPropria;
     }
 }

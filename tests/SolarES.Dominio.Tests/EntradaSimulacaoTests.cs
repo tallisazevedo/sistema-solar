@@ -28,5 +28,6 @@ public class EntradaSimulacaoTests
         Subgrupo.B1,
         "3205200",
         TipoTelhado.Ceramico,
-        30m);
+        30m,
+        false);
 }
