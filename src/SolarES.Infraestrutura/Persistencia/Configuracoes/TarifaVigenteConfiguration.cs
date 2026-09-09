@@ -14,7 +14,7 @@ public sealed class TarifaVigenteConfiguration : IEntityTypeConfiguration<Tarifa
         builder.Property(t => t.AliquotaIcms).HasPrecision(18, 6);
         builder.Property(t => t.AliquotaPisCofins).HasPrecision(18, 6);
         builder.Property(t => t.ResolucaoHomologatoria).HasMaxLength(200);
-        builder.Property(t => t.Fonte).HasMaxLength(500);
+        builder.Property(t => t.Fonte).HasMaxLength(2000);
 
         builder.HasIndex(t => new { t.DistribuidoraId, t.Subgrupo, t.VigenciaInicio });
     }

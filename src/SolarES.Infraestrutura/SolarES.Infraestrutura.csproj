@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Persistencia\Seeds\municipios-es.json" />
+    <EmbeddedResource Include="Persistencia\Seeds\tarifas-es.json" />
   </ItemGroup>
 
   <ItemGroup>

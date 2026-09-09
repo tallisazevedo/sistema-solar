@@ -1,0 +1,80 @@
+[
+  {
+    "siglaDistribuidora": "EDP ES",
+    "subgrupo": "B1",
+    "tarifaTe": 0.33759,
+    "tarifaTusd": 0.34895,
+    "valorFioBPorKwh": 0.209152,
+    "aliquotaIcms": 0.17,
+    "aliquotaPisCofins": 0.0925,
+    "vigenciaInicio": "2026-08-07T00:00:00Z",
+    "vigenciaFim": "2027-08-06T00:00:00Z",
+    "resolucaoHomologatoria": "RESOLUÇÃO HOMOLOGATÓRIA Nº 3.600, DE 31 DE JULHO DE 2026",
+    "fonte": "ANEEL dadosabertos: tarifas-distribuidoras-energia-eletrica (TE/TUSD) e componentes-tarifarias-2026 (TUSD_FioB); RESOLUÇÃO HOMOLOGATÓRIA Nº 3.600, DE 31 DE JULHO DE 2026."
+  },
+  {
+    "siglaDistribuidora": "EDP ES",
+    "subgrupo": "B2",
+    "tarifaTe": 0.33739,
+    "tarifaTusd": 0.50632,
+    "valorFioBPorKwh": 0.209152,
+    "aliquotaIcms": 0.17,
+    "aliquotaPisCofins": 0.0925,
+    "vigenciaInicio": "2026-08-07T00:00:00Z",
+    "vigenciaFim": "2027-08-06T00:00:00Z",
+    "resolucaoHomologatoria": "RESOLUÇÃO HOMOLOGATÓRIA Nº 3.600, DE 31 DE JULHO DE 2026",
+    "fonte": "ANEEL dadosabertos: tarifas-distribuidoras-energia-eletrica (TE/TUSD) e componentes-tarifarias-2026 (TUSD_FioB); RESOLUÇÃO HOMOLOGATÓRIA Nº 3.600, DE 31 DE JULHO DE 2026."
+  },
+  {
+    "siglaDistribuidora": "EDP ES",
+    "subgrupo": "B3",
+    "tarifaTe": 0.33739,
+    "tarifaTusd": 0.50632,
+    "valorFioBPorKwh": 0.209152,
+    "aliquotaIcms": 0.17,
+    "aliquotaPisCofins": 0.0925,
+    "vigenciaInicio": "2026-08-07T00:00:00Z",
+    "vigenciaFim": "2027-08-06T00:00:00Z",
+    "resolucaoHomologatoria": "RESOLUÇÃO HOMOLOGATÓRIA Nº 3.600, DE 31 DE JULHO DE 2026",
+    "fonte": "ANEEL dadosabertos: tarifas-distribuidoras-energia-eletrica (TE/TUSD) e componentes-tarifarias-2026 (TUSD_FioB); RESOLUÇÃO HOMOLOGATÓRIA Nº 3.600, DE 31 DE JULHO DE 2026."
+  },
+  {
+    "siglaDistribuidora": "ELFSM",
+    "subgrupo": "B1",
+    "tarifaTe": 0.28247,
+    "tarifaTusd": 0.30117,
+    "valorFioBPorKwh": 0.209152,
+    "aliquotaIcms": 0.17,
+    "aliquotaPisCofins": 0.0925,
+    "vigenciaInicio": "2026-01-01T00:00:00Z",
+    "vigenciaFim": "2026-09-21T00:00:00Z",
+    "resolucaoHomologatoria": "RESOLUÇÃO HOMOLOGATÓRIA Nº 3.519, DE 16 DE SETEMBRO DE 2025",
+    "fonte": "ANEEL dadosabertos: tarifas-distribuidoras-energia-eletrica (TE/TUSD) e componentes-tarifarias-2026 (TUSD_FioB); RESOLUÇÃO HOMOLOGATÓRIA Nº 3.519, DE 16 DE SETEMBRO DE 2025. ATENCAO: ELFSM nao possui linhas no dataset componentes-tarifarias; ValorFioBPorKwh usa o valor publicado para EDP ES como proxy (mesma metodologia nacional ANEEL para baixa tensao, valor identico entre B1/B2/B3 na propria EDP ES). REH 3.519/2025 da ELFSM nao pode ser lida diretamente (cedoc.aneel.gov.br bloqueado por desafio Cloudflare nesta sessao) -- revisar quando o acesso for possivel."
+  },
+  {
+    "siglaDistribuidora": "ELFSM",
+    "subgrupo": "B2",
+    "tarifaTe": 0.30339,
+    "tarifaTusd": 0.44198,
+    "valorFioBPorKwh": 0.209152,
+    "aliquotaIcms": 0.17,
+    "aliquotaPisCofins": 0.0925,
+    "vigenciaInicio": "2026-01-01T00:00:00Z",
+    "vigenciaFim": "2026-09-21T00:00:00Z",
+    "resolucaoHomologatoria": "RESOLUÇÃO HOMOLOGATÓRIA Nº 3.519, DE 16 DE SETEMBRO DE 2025",
+    "fonte": "ANEEL dadosabertos: tarifas-distribuidoras-energia-eletrica (TE/TUSD) e componentes-tarifarias-2026 (TUSD_FioB); RESOLUÇÃO HOMOLOGATÓRIA Nº 3.519, DE 16 DE SETEMBRO DE 2025. ATENCAO: ELFSM nao possui linhas no dataset componentes-tarifarias; ValorFioBPorKwh usa o valor publicado para EDP ES como proxy (mesma metodologia nacional ANEEL para baixa tensao, valor identico entre B1/B2/B3 na propria EDP ES). REH 3.519/2025 da ELFSM nao pode ser lida diretamente (cedoc.aneel.gov.br bloqueado por desafio Cloudflare nesta sessao) -- revisar quando o acesso for possivel."
+  },
+  {
+    "siglaDistribuidora": "ELFSM",
+    "subgrupo": "B3",
+    "tarifaTe": 0.30339,
+    "tarifaTusd": 0.44198,
+    "valorFioBPorKwh": 0.209152,
+    "aliquotaIcms": 0.17,
+    "aliquotaPisCofins": 0.0925,
+    "vigenciaInicio": "2026-01-01T00:00:00Z",
+    "vigenciaFim": "2026-09-21T00:00:00Z",
+    "resolucaoHomologatoria": "RESOLUÇÃO HOMOLOGATÓRIA Nº 3.519, DE 16 DE SETEMBRO DE 2025",
+    "fonte": "ANEEL dadosabertos: tarifas-distribuidoras-energia-eletrica (TE/TUSD) e componentes-tarifarias-2026 (TUSD_FioB); RESOLUÇÃO HOMOLOGATÓRIA Nº 3.519, DE 16 DE SETEMBRO DE 2025. ATENCAO: ELFSM nao possui linhas no dataset componentes-tarifarias; ValorFioBPorKwh usa o valor publicado para EDP ES como proxy (mesma metodologia nacional ANEEL para baixa tensao, valor identico entre B1/B2/B3 na propria EDP ES). REH 3.519/2025 da ELFSM nao pode ser lida diretamente (cedoc.aneel.gov.br bloqueado por desafio Cloudflare nesta sessao) -- revisar quando o acesso for possivel."
+  }
+]
