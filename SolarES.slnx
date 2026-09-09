@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SolarES.Api/SolarES.Api.csproj" />
+    <Project Path="src/SolarES.Aplicacao/SolarES.Aplicacao.csproj" />
+    <Project Path="src/SolarES.Dominio/SolarES.Dominio.csproj" />
+    <Project Path="src/SolarES.Infraestrutura/SolarES.Infraestrutura.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SolarES.Api.Tests/SolarES.Api.Tests.csproj" />
+    <Project Path="tests/SolarES.Dominio.Tests/SolarES.Dominio.Tests.csproj" />
+  </Folder>
+</Solution>

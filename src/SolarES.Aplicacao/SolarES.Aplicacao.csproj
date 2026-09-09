@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SolarES.Dominio\SolarES.Dominio.csproj" />
+  </ItemGroup>
+
+</Project>
