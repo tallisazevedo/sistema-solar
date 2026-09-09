@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using SolarES.Aplicacao.Configuracao;
 using SolarES.Infraestrutura.Persistencia;
+using SolarES.Infraestrutura.Persistencia.Repositorios;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,10 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<SolarESDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("SolarES")));
+
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<IConfiguracaoVersaoRepository, ConfiguracaoVersaoRepository>();
+builder.Services.AddScoped<ConfiguracaoVersaoAppService>();
 
 var app = builder.Build();
 

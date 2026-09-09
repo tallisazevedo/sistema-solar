@@ -7,6 +7,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/SolarES.Api.Tests/SolarES.Api.Tests.csproj" />
+    <Project Path="tests/SolarES.Aplicacao.Tests/SolarES.Aplicacao.Tests.csproj" />
     <Project Path="tests/SolarES.Dominio.Tests/SolarES.Dominio.Tests.csproj" />
   </Folder>
 </Solution>
