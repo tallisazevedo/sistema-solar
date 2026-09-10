@@ -5,6 +5,7 @@ import {
   ApiConfiguration,
   ConfiguracaoCalculo,
   ConfiguracaoVersaoResponse,
+  apiConfiguracaoBaselineGet$Json,
   apiConfiguracaoAtivaGet$Json,
   apiConfiguracaoRascunhoGet$Json,
   apiConfiguracaoRascunhosIdPayloadPut,
@@ -16,6 +17,12 @@ import {
 export class PremissasService {
   private readonly http = inject(HttpClient);
   private readonly apiConfig = inject(ApiConfiguration);
+
+  obterBaseline(): Observable<ConfiguracaoCalculo> {
+    return apiConfiguracaoBaselineGet$Json(this.http, this.apiConfig.rootUrl).pipe(
+      map((r) => r.body),
+    );
+  }
 
   obterRascunho(): Observable<ConfiguracaoVersaoResponse | null> {
     return apiConfiguracaoRascunhoGet$Json(this.http, this.apiConfig.rootUrl).pipe(
@@ -31,7 +38,10 @@ export class PremissasService {
     );
   }
 
-  criarRascunho(payload: ConfiguracaoCalculo, observacao: string | null): Observable<ConfiguracaoVersaoResponse> {
+  criarRascunho(
+    payload: ConfiguracaoCalculo,
+    observacao: string | null,
+  ): Observable<ConfiguracaoVersaoResponse> {
     return apiConfiguracaoRascunhosPost$Json(this.http, this.apiConfig.rootUrl, {
       body: { payload, observacao },
     }).pipe(map((r) => r.body));
@@ -45,7 +55,9 @@ export class PremissasService {
   }
 
   publicar(id: string): Observable<void> {
-    return apiConfiguracaoRascunhosIdPublicarPost(this.http, this.apiConfig.rootUrl, { id }).pipe(map(() => undefined));
+    return apiConfiguracaoRascunhosIdPublicarPost(this.http, this.apiConfig.rootUrl, { id }).pipe(
+      map(() => undefined),
+    );
   }
 
   private tratarNotFoundComoNulo(erro: unknown): Observable<null> {

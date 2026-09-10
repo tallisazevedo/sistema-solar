@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using SolarES.Api.Contratos;
 using SolarES.Dominio.Configuracao;
 
@@ -39,5 +40,20 @@ public class ConfiguracaoVersaoApiTests : IClassFixture<SolarESApiFactory>
         Assert.Equal(rascunho.Id, ativa!.Id);
         Assert.Equal(StatusConfiguracaoVersao.Publicada, ativa.Status);
         Assert.NotNull(ativa.PublicadaPorUsuarioId);
+    }
+
+    [Fact]
+    public async Task ObterBaseline_Autenticado_DevolveExatamenteOBaselineDoDominio()
+    {
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.DonoEmail, SolarESApiFactory.DonoSenha);
+
+        var response = await _cliente.GetAsync("/api/configuracao/baseline");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var recebido = await response.Content.ReadFromJsonAsync<ConfiguracaoCalculo>();
+        Assert.NotNull(recebido);
+        Assert.Equal(
+            JsonSerializer.Serialize(ConfiguracaoCalculoBaseline.Criar()),
+            JsonSerializer.Serialize(recebido));
     }
 }

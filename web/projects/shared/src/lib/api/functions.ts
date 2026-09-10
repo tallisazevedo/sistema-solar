@@ -5,6 +5,10 @@ export type { ApiAuthLoginPost$Plain$Params as ApiAuthLoginPost$Plain$Params } f
 export { apiAuthLoginPost$Plain as apiAuthLoginPost$Plain } from './fn/autenticacao/api-auth-login-post-plain';
 export type { ApiAuthLoginPost$Json$Params as ApiAuthLoginPost$Json$Params } from './fn/autenticacao/api-auth-login-post-json';
 export { apiAuthLoginPost$Json as apiAuthLoginPost$Json } from './fn/autenticacao/api-auth-login-post-json';
+export type { ApiConfiguracaoBaselineGet$Plain$Params as ApiConfiguracaoBaselineGet$Plain$Params } from './fn/configuracao-versao/api-configuracao-baseline-get-plain';
+export { apiConfiguracaoBaselineGet$Plain as apiConfiguracaoBaselineGet$Plain } from './fn/configuracao-versao/api-configuracao-baseline-get-plain';
+export type { ApiConfiguracaoBaselineGet$Json$Params as ApiConfiguracaoBaselineGet$Json$Params } from './fn/configuracao-versao/api-configuracao-baseline-get-json';
+export { apiConfiguracaoBaselineGet$Json as apiConfiguracaoBaselineGet$Json } from './fn/configuracao-versao/api-configuracao-baseline-get-json';
 export type { ApiConfiguracaoAtivaGet$Plain$Params as ApiConfiguracaoAtivaGet$Plain$Params } from './fn/configuracao-versao/api-configuracao-ativa-get-plain';
 export { apiConfiguracaoAtivaGet$Plain as apiConfiguracaoAtivaGet$Plain } from './fn/configuracao-versao/api-configuracao-ativa-get-plain';
 export type { ApiConfiguracaoAtivaGet$Json$Params as ApiConfiguracaoAtivaGet$Json$Params } from './fn/configuracao-versao/api-configuracao-ativa-get-json';

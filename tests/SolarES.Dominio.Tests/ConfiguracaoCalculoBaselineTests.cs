@@ -55,6 +55,22 @@ public class ConfiguracaoCalculoBaselineTests
         Assert.All(codigos, codigo => Assert.Matches("^\\d{7}$", codigo));
     }
 
+    [Fact]
+    public void Criar_FornecePerformanceRatioMaiorQueZero()
+    {
+        var configuracao = ConfiguracaoCalculoBaseline.Criar();
+
+        Assert.True(configuracao.PerformanceRatio.Valor > 0);
+    }
+
+    [Fact]
+    public void Criar_ForneceFatorOrientacaoPadraoMaiorQueZero()
+    {
+        var configuracao = ConfiguracaoCalculoBaseline.Criar();
+
+        Assert.True(configuracao.FatorOrientacaoPadrao.Valor > 0);
+    }
+
     private static bool EhTipoPremissa(Type tipo) =>
         tipo.IsGenericType && tipo.GetGenericTypeDefinition() == typeof(Premissa<>);
 }

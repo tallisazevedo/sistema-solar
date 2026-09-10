@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SolarES.Aplicacao.Configuracao;
 using SolarES.Api.Contratos;
+using SolarES.Dominio.Configuracao;
 using SolarES.Dominio.Identidade;
 
 namespace SolarES.Api.Controllers;
@@ -11,6 +12,9 @@ namespace SolarES.Api.Controllers;
 [Route("api/configuracao")]
 public sealed class ConfiguracaoVersaoController(ConfiguracaoVersaoAppService servico, IConfiguracaoVersaoRepository repositorio) : ControllerBase
 {
+    [HttpGet("baseline")]
+    public ActionResult<ConfiguracaoCalculo> ObterBaseline() => Ok(ConfiguracaoVersaoAppService.ObterBaseline());
+
     [HttpGet("ativa")]
     public async Task<ActionResult<ConfiguracaoVersaoResponse>> ObterAtiva(CancellationToken ct)
     {

@@ -4,6 +4,10 @@
     <a routerLink="provisorias">Ver painel de provisorias</a>
   </header>
 
+  @if (erro()) {
+    <p class="erro" role="alert">{{ erro() }}</p>
+  }
+
   @if (carregando()) {
     <p>Carregando...</p>
   } @else if (!rascunho()) {
@@ -14,9 +18,6 @@
       </button>
     </div>
   } @else {
-    @if (erro()) {
-      <p class="erro" role="alert">{{ erro() }}</p>
-    }
     @if (mensagem()) {
       <p class="mensagem">{{ mensagem() }}</p>
     }
@@ -81,7 +82,9 @@
               <tr [formGroupName]="$index">
                 <td><input type="number" formControlName="ano" /></td>
                 <td><input type="number" step="any" formControlName="percentual" /></td>
-                <td><button type="button" (click)="removerLinhaCronograma($index)">Remover</button></td>
+                <td>
+                  <button type="button" (click)="removerLinhaCronograma($index)">Remover</button>
+                </td>
               </tr>
             }
           </tbody>
@@ -113,7 +116,10 @@
         </label>
       </fieldset>
 
-      <fieldset [class.mudou]="mudou('custoDisponibilidadePorLigacao')" formGroupName="custoDisponibilidadePorLigacao">
+      <fieldset
+        [class.mudou]="mudou('custoDisponibilidadePorLigacao')"
+        formGroupName="custoDisponibilidadePorLigacao"
+      >
         <legend>{{ rotulos.custoDisponibilidadePorLigacao }}</legend>
         <label>
           Origem
@@ -168,7 +174,12 @@
       <div class="acoes">
         <button type="button" (click)="salvar()">Salvar rascunho</button>
         @if (ehDono()) {
-          <button type="button" (click)="publicar()">Publicar</button>
+          <button type="button" (click)="publicar()" [disabled]="temAlteracoesNaoSalvas()">
+            Publicar
+          </button>
+          @if (temAlteracoesNaoSalvas()) {
+            <span class="aviso-edicoes-nao-salvas">Salve o rascunho antes de publicar.</span>
+          }
         }
       </div>
     </form>

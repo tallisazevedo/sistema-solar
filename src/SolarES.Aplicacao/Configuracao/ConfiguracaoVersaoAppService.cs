@@ -4,6 +4,8 @@ namespace SolarES.Aplicacao.Configuracao;
 
 public sealed class ConfiguracaoVersaoAppService(IConfiguracaoVersaoRepository repositorio, TimeProvider relogio)
 {
+    public static ConfiguracaoCalculo ObterBaseline() => ConfiguracaoCalculoBaseline.Criar();
+
     public async Task<ConfiguracaoVersao> CriarRascunhoAsync(
         ConfiguracaoCalculo payload, string? observacao, CancellationToken ct)
     {
