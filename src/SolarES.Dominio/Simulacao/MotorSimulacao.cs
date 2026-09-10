@@ -76,6 +76,7 @@ public static class MotorSimulacao
             financeiro?.Tir,
             financeiro?.Vpl ?? 0m,
             roteada,
-            motivoRoteamento);
+            motivoRoteamento,
+            projecao);
     }
 }

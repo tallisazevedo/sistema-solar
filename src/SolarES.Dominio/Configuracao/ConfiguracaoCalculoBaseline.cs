@@ -94,5 +94,13 @@ public static class ConfiguracaoCalculoBaseline
         CustoDisponibilidadePorLigacao: new Premissa<CustoDisponibilidade>(
             new CustoDisponibilidade(Monofasica: 30m, Bifasica: 50m, Trifasica: 100m),
             OrigemPremissa.Lei,
-            "Art. 5 da Lei 14.300/2022 / REN ANEEL 1.059/2023 — valores citados literalmente no docs/02."));
+            "Art. 5 da Lei 14.300/2022 / REN ANEEL 1.059/2023 — valores citados literalmente no docs/02."),
+
+        TextosProposta: new Premissa<TextosProposta>(
+            new TextosProposta(
+                Disclaimer: "Proposta gerada automaticamente com premissas ainda nao validadas com a empresa "
+                    + "(marcadas Provisorio). Numeros sujeitos a revisao apos a calibracao com contas reais.",
+                ValidadeDias: 15),
+            OrigemPremissa.Provisorio,
+            "Texto e prazo de validade padrao do setor; conteudo final e prazo comercial sao decisao do dono no G1."));
 }

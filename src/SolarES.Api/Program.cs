@@ -7,10 +7,14 @@ using SolarES.Api;
 using SolarES.Aplicacao.Compartilhado;
 using SolarES.Aplicacao.Configuracao;
 using SolarES.Aplicacao.Identidade;
+using SolarES.Aplicacao.Propostas;
 using SolarES.Aplicacao.Simulacoes;
 using SolarES.Infraestrutura.Identidade;
+using SolarES.Infraestrutura.Pdf;
 using SolarES.Infraestrutura.Persistencia;
 using SolarES.Infraestrutura.Persistencia.Repositorios;
+
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +38,10 @@ builder.Services.AddScoped<AutenticacaoAppService>();
 
 builder.Services.AddScoped<ISimulacaoRepository, EfSimulacaoRepository>();
 builder.Services.AddScoped<SimulacaoAppService>();
+
+builder.Services.AddScoped<IPropostaRepository, EfPropostaRepository>();
+builder.Services.AddScoped<IGeradorPdfProposta, GeradorPdfProposta>();
+builder.Services.AddScoped<PropostaAppService>();
 
 var segredoJwt = builder.Configuration["Jwt:Segredo"]
     ?? throw new InvalidOperationException("Configuracao 'Jwt:Segredo' ausente.");

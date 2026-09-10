@@ -14,4 +14,5 @@ public sealed record ConfiguracaoCalculo(
     Premissa<EstrategiaFioBForaCronograma> EstrategiaFioBForaCronograma,
     Premissa<decimal> LimiteKwpRoteamentoHumano,
     Premissa<ConfiguracaoKitLitoral> KitLitoral,
-    Premissa<CustoDisponibilidade> CustoDisponibilidadePorLigacao);
+    Premissa<CustoDisponibilidade> CustoDisponibilidadePorLigacao,
+    Premissa<TextosProposta> TextosProposta);

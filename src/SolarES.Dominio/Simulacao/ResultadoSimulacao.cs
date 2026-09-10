@@ -12,4 +12,5 @@ public sealed record ResultadoSimulacao(
     decimal? Tir,
     decimal Vpl,
     bool RoteadaParaHumano,
-    string? MotivoRoteamento);
+    string? MotivoRoteamento,
+    IReadOnlyList<AnoProjecao> Projecao);
