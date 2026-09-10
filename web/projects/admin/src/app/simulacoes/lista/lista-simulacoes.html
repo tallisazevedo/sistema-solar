@@ -1,0 +1,37 @@
+<section class="lista-simulacoes">
+  <header>
+    <h1>Simulacoes</h1>
+    <a routerLink="/simulacoes/nova">Nova simulacao</a>
+  </header>
+
+  @if (carregando()) {
+    <p>Carregando...</p>
+  } @else if (simulacoes().length === 0) {
+    <p>Nenhuma simulacao ainda.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>kWp</th>
+          <th>Capex</th>
+          <th>Economia mensal</th>
+          <th>Payback (meses)</th>
+          <th>Roteada?</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (simulacao of simulacoes(); track simulacao.id) {
+          <tr [class.roteada]="simulacao.roteadaParaHumano">
+            <td>{{ simulacao.criadoEm | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ simulacao.potenciaKwp }}</td>
+            <td>{{ simulacao.capex | number: '1.2-2' }}</td>
+            <td>{{ simulacao.economiaMensalAno1 | number: '1.2-2' }}</td>
+            <td>{{ simulacao.paybackMeses ?? '-' }}</td>
+            <td>{{ simulacao.roteadaParaHumano ? 'Sim' : 'Nao' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

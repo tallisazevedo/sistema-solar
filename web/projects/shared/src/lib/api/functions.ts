@@ -117,6 +117,18 @@ export type { ApiTarifasMunicipiosIdPut$Params as ApiTarifasMunicipiosIdPut$Para
 export { apiTarifasMunicipiosIdPut as apiTarifasMunicipiosIdPut } from './fn/municipios-hsp/api-tarifas-municipios-id-put';
 export type { ApiTarifasMunicipiosIdDelete$Params as ApiTarifasMunicipiosIdDelete$Params } from './fn/municipios-hsp/api-tarifas-municipios-id-delete';
 export { apiTarifasMunicipiosIdDelete as apiTarifasMunicipiosIdDelete } from './fn/municipios-hsp/api-tarifas-municipios-id-delete';
+export type { ApiSimulacoesGet$Plain$Params as ApiSimulacoesGet$Plain$Params } from './fn/simulacoes/api-simulacoes-get-plain';
+export { apiSimulacoesGet$Plain as apiSimulacoesGet$Plain } from './fn/simulacoes/api-simulacoes-get-plain';
+export type { ApiSimulacoesGet$Json$Params as ApiSimulacoesGet$Json$Params } from './fn/simulacoes/api-simulacoes-get-json';
+export { apiSimulacoesGet$Json as apiSimulacoesGet$Json } from './fn/simulacoes/api-simulacoes-get-json';
+export type { ApiSimulacoesPost$Plain$Params as ApiSimulacoesPost$Plain$Params } from './fn/simulacoes/api-simulacoes-post-plain';
+export { apiSimulacoesPost$Plain as apiSimulacoesPost$Plain } from './fn/simulacoes/api-simulacoes-post-plain';
+export type { ApiSimulacoesPost$Json$Params as ApiSimulacoesPost$Json$Params } from './fn/simulacoes/api-simulacoes-post-json';
+export { apiSimulacoesPost$Json as apiSimulacoesPost$Json } from './fn/simulacoes/api-simulacoes-post-json';
+export type { ApiSimulacoesIdGet$Plain$Params as ApiSimulacoesIdGet$Plain$Params } from './fn/simulacoes/api-simulacoes-id-get-plain';
+export { apiSimulacoesIdGet$Plain as apiSimulacoesIdGet$Plain } from './fn/simulacoes/api-simulacoes-id-get-plain';
+export type { ApiSimulacoesIdGet$Json$Params as ApiSimulacoesIdGet$Json$Params } from './fn/simulacoes/api-simulacoes-id-get-json';
+export { apiSimulacoesIdGet$Json as apiSimulacoesIdGet$Json } from './fn/simulacoes/api-simulacoes-id-get-json';
 export type { ApiTarifasVigentesGet$Plain$Params as ApiTarifasVigentesGet$Plain$Params } from './fn/tarifas-vigentes/api-tarifas-vigentes-get-plain';
 export { apiTarifasVigentesGet$Plain as apiTarifasVigentesGet$Plain } from './fn/tarifas-vigentes/api-tarifas-vigentes-get-plain';
 export type { ApiTarifasVigentesGet$Json$Params as ApiTarifasVigentesGet$Json$Params } from './fn/tarifas-vigentes/api-tarifas-vigentes-get-json';

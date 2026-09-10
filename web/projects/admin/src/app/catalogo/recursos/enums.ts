@@ -18,3 +18,9 @@ export const OPCOES_SUBGRUPO: OpcaoEnum[] = [
   { valor: 1, rotulo: 'B2' },
   { valor: 2, rotulo: 'B3' },
 ];
+
+export const OPCOES_TIPO_LIGACAO: OpcaoEnum[] = [
+  { valor: 0, rotulo: 'Monofasica' },
+  { valor: 1, rotulo: 'Bifasica' },
+  { valor: 2, rotulo: 'Trifasica' },
+];

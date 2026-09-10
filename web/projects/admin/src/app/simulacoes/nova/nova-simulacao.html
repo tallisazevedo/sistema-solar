@@ -1,0 +1,123 @@
+<section class="nova-simulacao">
+  <h1>Nova simulacao</h1>
+
+  @if (erro()) {
+    <p class="erro" role="alert">{{ erro() }}</p>
+  }
+
+  <form [formGroup]="formulario" (ngSubmit)="simular()">
+    <fieldset>
+      <legend>Consumo</legend>
+
+      <div class="alternador">
+        <button type="button" [class.ativo]="modo() === 'medio'" (click)="alternarModo('medio')">Consumo medio</button>
+        <button type="button" [class.ativo]="modo() === 'mensal'" (click)="alternarModo('mensal')">12 meses</button>
+      </div>
+
+      @if (modo() === 'medio') {
+        <label>
+          Consumo medio mensal (kWh)
+          <input type="number" step="any" formControlName="consumoMedio" />
+        </label>
+      } @else {
+        <div class="consumo-mensal" formArrayName="consumoMensal">
+          @for (mes of consumoMensal.controls; track $index) {
+            <label>
+              Mes {{ $index + 1 }}
+              <input type="number" step="any" [formControlName]="$index" />
+            </label>
+          }
+        </div>
+      }
+    </fieldset>
+
+    <label>
+      Tipo de ligacao
+      <select formControlName="tipoLigacao">
+        @for (opcao of opcoesTipoLigacao; track opcao.valor) {
+          <option [value]="opcao.valor">{{ opcao.rotulo }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      Subgrupo
+      <select formControlName="subgrupo">
+        @for (opcao of opcoesSubgrupo; track opcao.valor) {
+          <option [value]="opcao.valor">{{ opcao.rotulo }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      Municipio
+      <select formControlName="municipioCodigoIbge">
+        @for (municipio of municipios(); track municipio.codigoIbge) {
+          <option [value]="municipio.codigoIbge">{{ municipio.nome }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      Tipo de telhado
+      <select formControlName="tipoTelhado">
+        @for (opcao of opcoesTipoTelhado; track opcao.valor) {
+          <option [value]="opcao.valor">{{ opcao.rotulo }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      Area disponivel no telhado (m2)
+      <input type="number" step="any" formControlName="areaDisponivelM2" />
+    </label>
+
+    <label class="checkbox">
+      <input type="checkbox" formControlName="possuiGeracaoPropria" />
+      Ja possui geracao propria instalada
+    </label>
+
+    <button type="submit" [disabled]="formulario.invalid || enviando()">
+      {{ enviando() ? 'Calculando...' : 'Gerar simulacao' }}
+    </button>
+  </form>
+
+  @if (resultado(); as detalhe) {
+    <section class="resultado" [class.roteada]="detalhe.resultado.roteadaParaHumano">
+      <h2>Resultado</h2>
+
+      @if (detalhe.resultado.roteadaParaHumano) {
+        <p class="aviso">Esta simulacao precisa de avaliacao de um engenheiro: {{ detalhe.resultado.motivoRoteamento }}</p>
+      }
+
+      <dl>
+        <dt>Potencia instalada</dt>
+        <dd>{{ detalhe.resultado.potenciaInstaladaKwp }} kWp</dd>
+
+        <dt>Quantidade de modulos</dt>
+        <dd>{{ detalhe.resultado.quantidadeModulos }}</dd>
+
+        <dt>Cobertura</dt>
+        <dd>{{ detalhe.resultado.coberturaPercentual }}%</dd>
+
+        <dt>Investimento (capex)</dt>
+        <dd>{{ detalhe.resultado.capex | number: '1.2-2' }}</dd>
+
+        <dt>Economia media mensal (ano 1)</dt>
+        <dd>{{ detalhe.resultado.economiaMensalAno1 | number: '1.2-2' }}</dd>
+
+        <dt>Payback simples</dt>
+        <dd>{{ detalhe.resultado.paybackMesesSimples ?? 'nao atingido no horizonte' }}</dd>
+
+        <dt>Payback descontado</dt>
+        <dd>{{ detalhe.resultado.paybackMesesDescontado ?? 'nao atingido no horizonte' }}</dd>
+
+        <dt>VPL</dt>
+        <dd>{{ detalhe.resultado.vpl | number: '1.2-2' }}</dd>
+
+        <dt>TIR</dt>
+        <dd>{{ detalhe.resultado.tir !== null ? (detalhe.resultado.tir | number: '1.2-2') : 'sem raiz no intervalo' }}</dd>
+      </dl>
+    </section>
+  }
+</section>

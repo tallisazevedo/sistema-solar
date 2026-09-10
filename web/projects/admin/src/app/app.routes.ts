@@ -13,6 +13,8 @@ import { Login } from './login/login';
 import { Premissas } from './premissas/premissas';
 import { Provisorias } from './premissas/provisorias/provisorias';
 import { Shell } from './shell/shell';
+import { ListaSimulacoes } from './simulacoes/lista/lista-simulacoes';
+import { NovaSimulacao } from './simulacoes/nova/nova-simulacao';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -31,6 +33,8 @@ export const routes: Routes = [
       { path: 'tarifas/distribuidoras', component: CrudGenerico, data: { configFactory: criarConfigDistribuidoras } },
       { path: 'premissas', component: Premissas },
       { path: 'premissas/provisorias', component: Provisorias },
+      { path: 'simulacoes', component: ListaSimulacoes },
+      { path: 'simulacoes/nova', component: NovaSimulacao },
     ],
   },
 ];
