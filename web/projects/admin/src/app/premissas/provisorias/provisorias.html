@@ -1,0 +1,27 @@
+<section class="provisorias">
+  <h1>Premissas provisorias</h1>
+
+  @if (carregando()) {
+    <p>Carregando...</p>
+  } @else if (erro()) {
+    <p class="erro" role="alert">{{ erro() }}</p>
+  } @else if (!rascunho()) {
+    <p>Nao ha rascunho ativo. Crie um na tela de Premissas.</p>
+  } @else {
+    <p class="contagem">
+      {{ linhas().length }} de {{ 12 }} premissas ainda sao provisorias
+      @if (linhas().length === 0) {
+        — nenhuma pendencia. Esta versao esta pronta para validacao real com a empresa.
+      }
+    </p>
+
+    @for (linha of linhas(); track linha.chave) {
+      <article class="cartao">
+        <h2>{{ linha.rotulo }}</h2>
+        <p class="valor">Valor atual: {{ linha.valorTexto }}</p>
+        <p class="justificativa">{{ linha.justificativa }}</p>
+        <p class="responsavel">Responsavel: {{ responsavel() }}</p>
+      </article>
+    }
+  }
+</section>

@@ -1,0 +1,30 @@
+<div class="shell">
+  <header class="topo">
+    <span class="marca">SolarES admin</span>
+    <span class="usuario">{{ usuario()?.nome }} ({{ nomePerfil() }})</span>
+    <button type="button" (click)="sair()">Sair</button>
+  </header>
+
+  <div class="corpo">
+    <nav class="lateral">
+      <a routerLink="/">Dashboard</a>
+      <p class="grupo">Catalogo</p>
+      <a routerLink="/catalogo/modulos-fotovoltaicos">Modulos fotovoltaicos</a>
+      <a routerLink="/catalogo/inversores">Inversores</a>
+      <a routerLink="/catalogo/estruturas">Estruturas</a>
+      <p class="grupo">Precos</p>
+      <a routerLink="/precos/faixas-preco">Faixas de preco</a>
+      <p class="grupo">Tarifas</p>
+      <a routerLink="/tarifas/vigentes">Tarifas vigentes</a>
+      <a routerLink="/tarifas/municipios">Municipios (HSP)</a>
+      <a routerLink="/tarifas/distribuidoras">Distribuidoras</a>
+      <p class="grupo">Configuracao</p>
+      <a routerLink="/premissas">Premissas</a>
+      <a routerLink="/premissas/provisorias">Provisorias</a>
+    </nav>
+
+    <main class="conteudo">
+      <router-outlet />
+    </main>
+  </div>
+</div>

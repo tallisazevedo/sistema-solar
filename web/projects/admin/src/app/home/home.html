@@ -1,4 +1,16 @@
-<main class="home">
-  <h1>Bem-vindo, {{ usuario()?.nome }} ({{ nomePerfil() }})</h1>
-  <button type="button" (click)="sair()">Sair</button>
-</main>
+<section class="dashboard">
+  <h1>Dashboard</h1>
+
+  @if (quantidadeProvisorias() !== null) {
+    <a class="cartao-provisorias" routerLink="/premissas/provisorias">
+      {{ quantidadeProvisorias() }} premissa(s) provisoria(s) pendente(s) de validacao
+    </a>
+  }
+
+  <nav class="atalhos">
+    <a routerLink="/catalogo/modulos-fotovoltaicos">Catalogo</a>
+    <a routerLink="/precos/faixas-preco">Precos</a>
+    <a routerLink="/tarifas/vigentes">Tarifas</a>
+    <a routerLink="/premissas">Premissas</a>
+  </nav>
+</section>

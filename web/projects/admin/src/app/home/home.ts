@@ -1,27 +1,30 @@
-import { Component, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { AuthService } from '../core/auth.service';
-
-const NOME_PERFIL = ['Dono', 'Vendedor', 'Engenheiro'] as const;
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { CHAVES_PREMISSA, ORIGEM_PROVISORIO } from '../premissas/rotulos';
+import { PremissasService } from '../premissas/premissas.service';
 
 @Component({
-  imports: [],
+  imports: [RouterLink],
   selector: 'app-home',
   styleUrl: './home.css',
   templateUrl: './home.html',
 })
-export class Home {
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
+export class Home implements OnInit {
+  private readonly premissasServico = inject(PremissasService);
 
-  protected readonly usuario = this.auth.usuarioAtual;
-  protected readonly nomePerfil = computed(() => {
-    const usuario = this.usuario();
-    return usuario ? NOME_PERFIL[usuario.perfil] : '';
-  });
+  protected readonly quantidadeProvisorias = signal<number | null>(null);
 
-  protected sair(): void {
-    this.auth.logout();
-    this.router.navigateByUrl('/login');
+  ngOnInit(): void {
+    this.premissasServico.obterRascunho().subscribe({
+      next: (rascunho) => {
+        if (!rascunho) {
+          this.quantidadeProvisorias.set(null);
+          return;
+        }
+        const provisorias = CHAVES_PREMISSA.filter((chave) => rascunho.payload[chave].origem === ORIGEM_PROVISORIO);
+        this.quantidadeProvisorias.set(provisorias.length);
+      },
+      error: () => this.quantidadeProvisorias.set(null),
+    });
   }
 }

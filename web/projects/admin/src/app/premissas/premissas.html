@@ -1,0 +1,152 @@
+<section class="premissas">
+  <header>
+    <h1>Premissas</h1>
+    <a routerLink="provisorias">Ver painel de provisorias</a>
+  </header>
+
+  @if (carregando()) {
+    <p>Carregando...</p>
+  } @else if (!rascunho()) {
+    <div class="sem-rascunho">
+      <p>Nao ha rascunho ativo.</p>
+      <button type="button" (click)="criarRascunho()">
+        {{ versaoAtiva() ? 'Criar rascunho a partir da versao ativa' : 'Criar primeiro rascunho' }}
+      </button>
+    </div>
+  } @else {
+    @if (erro()) {
+      <p class="erro" role="alert">{{ erro() }}</p>
+    }
+    @if (mensagem()) {
+      <p class="mensagem">{{ mensagem() }}</p>
+    }
+
+    <p class="status">
+      Rascunho #{{ rascunho()!.numero }}
+      @if (versaoAtiva()) {
+        — comparando com a versao ativa #{{ versaoAtiva()!.numero }}
+      } @else {
+        — ainda nao ha versao publicada; esta sera a primeira.
+      }
+    </p>
+
+    <form class="formulario" [formGroup]="formulario!">
+      @for (chave of chavesSimples; track chave) {
+        <fieldset [class.mudou]="mudou(chave)" [formGroupName]="chave">
+          <legend>{{ rotulos[chave] }}</legend>
+          <label>
+            Valor
+            <input type="number" step="any" formControlName="valor" />
+          </label>
+          <label>
+            Origem
+            <select formControlName="origem">
+              @for (rotuloOrigem of origensRotulo; track $index) {
+                <option [value]="$index">{{ rotuloOrigem }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Justificativa
+            <textarea formControlName="justificativa" rows="2"></textarea>
+          </label>
+        </fieldset>
+      }
+
+      <fieldset [class.mudou]="mudou('cronogramaFioB')" formGroupName="cronogramaFioB">
+        <legend>{{ rotulos.cronogramaFioB }}</legend>
+        <label>
+          Origem
+          <select formControlName="origem">
+            @for (rotuloOrigem of origensRotulo; track $index) {
+              <option [value]="$index">{{ rotuloOrigem }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Justificativa
+          <textarea formControlName="justificativa" rows="2"></textarea>
+        </label>
+
+        <table formArrayName="linhas">
+          <thead>
+            <tr>
+              <th>Ano</th>
+              <th>Percentual</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (linha of linhasCronograma().controls; track $index) {
+              <tr [formGroupName]="$index">
+                <td><input type="number" formControlName="ano" /></td>
+                <td><input type="number" step="any" formControlName="percentual" /></td>
+                <td><button type="button" (click)="removerLinhaCronograma($index)">Remover</button></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <button type="button" (click)="adicionarLinhaCronograma()">Adicionar ano</button>
+      </fieldset>
+
+      <fieldset [class.mudou]="mudou('kitLitoral')" formGroupName="kitLitoral">
+        <legend>{{ rotulos.kitLitoral }}</legend>
+        <label>
+          Origem
+          <select formControlName="origem">
+            @for (rotuloOrigem of origensRotulo; track $index) {
+              <option [value]="$index">{{ rotuloOrigem }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Justificativa
+          <textarea formControlName="justificativa" rows="2"></textarea>
+        </label>
+        <label>
+          Raio (km)
+          <input type="number" step="any" formControlName="raioKm" />
+        </label>
+        <label>
+          Municipios (codigo IBGE, separados por virgula)
+          <textarea formControlName="municipiosTexto" rows="3"></textarea>
+        </label>
+      </fieldset>
+
+      <fieldset [class.mudou]="mudou('custoDisponibilidadePorLigacao')" formGroupName="custoDisponibilidadePorLigacao">
+        <legend>{{ rotulos.custoDisponibilidadePorLigacao }}</legend>
+        <label>
+          Origem
+          <select formControlName="origem">
+            @for (rotuloOrigem of origensRotulo; track $index) {
+              <option [value]="$index">{{ rotuloOrigem }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Justificativa
+          <textarea formControlName="justificativa" rows="2"></textarea>
+        </label>
+        <label>
+          Monofasica (kWh)
+          <input type="number" step="any" formControlName="monofasica" />
+        </label>
+        <label>
+          Bifasica (kWh)
+          <input type="number" step="any" formControlName="bifasica" />
+        </label>
+        <label>
+          Trifasica (kWh)
+          <input type="number" step="any" formControlName="trifasica" />
+        </label>
+      </fieldset>
+
+      <div class="acoes">
+        <button type="button" (click)="salvar()">Salvar rascunho</button>
+        @if (ehDono()) {
+          <button type="button" (click)="publicar()">Publicar</button>
+        }
+      </div>
+    </form>
+  }
+</section>

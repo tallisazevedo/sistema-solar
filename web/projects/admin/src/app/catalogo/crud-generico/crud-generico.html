@@ -1,0 +1,87 @@
+<section class="crud">
+  @if (!config()) {
+    <p>Carregando...</p>
+  } @else {
+    <header>
+      <h1>{{ config()!.titulo }}</h1>
+      <button type="button" (click)="abrirNovo()">Novo</button>
+    </header>
+
+    @if (erro()) {
+      <p class="erro" role="alert">{{ erro() }}</p>
+    }
+
+    @if (modo() !== 'fechado') {
+      <form class="formulario" [formGroup]="formulario" (ngSubmit)="salvar()">
+        @for (campo of config()!.campos; track campo.chave) {
+          <label>
+            {{ campo.rotulo }}
+
+            @switch (campo.tipo) {
+              @case ('booleano') {
+                <input type="checkbox" [formControlName]="campo.chave" />
+              }
+              @case ('enum') {
+                <select [formControlName]="campo.chave">
+                  @for (opcao of campo.opcoesEnum; track opcao.valor) {
+                    <option [value]="opcao.valor">{{ opcao.rotulo }}</option>
+                  }
+                </select>
+              }
+              @case ('data') {
+                <input type="date" [formControlName]="campo.chave" />
+              }
+              @case ('hsp-mensal') {
+                <div class="hsp-mensal" [formArrayName]="campo.chave">
+                  @for (mes of campoArray(campo.chave).controls; track $index) {
+                    <input type="number" step="any" [formControlName]="$index" />
+                  }
+                </div>
+              }
+              @default {
+                <input [type]="campo.tipo === 'texto' ? 'text' : 'number'" [attr.step]="campo.tipo === 'decimal' ? 'any' : null" [formControlName]="campo.chave" />
+              }
+            }
+          </label>
+        }
+
+        <div class="acoes">
+          <button type="submit" [disabled]="formulario.invalid">Salvar</button>
+          <button type="button" (click)="fechar()">Cancelar</button>
+        </div>
+      </form>
+    }
+
+    @if (carregando()) {
+      <p>Carregando lista...</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            @for (campo of config()!.campos; track campo.chave) {
+              @if (campo.tipo !== 'hsp-mensal') {
+                <th>{{ campo.rotulo }}</th>
+              }
+            }
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of itens(); track item.id) {
+            <tr>
+              @for (campo of config()!.campos; track campo.chave) {
+                @if (campo.tipo !== 'hsp-mensal') {
+                  <td>{{ valorExibicao(campo, item) }}</td>
+                }
+              }
+              <td class="linha-acoes">
+                <button type="button" (click)="abrirEdicao(item)">Editar</button>
+                <button type="button" (click)="remover(item)">Remover</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+</section>

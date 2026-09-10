@@ -3,19 +3,19 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideApiConfiguration } from 'shared';
-import { Home } from './home';
+import { Provisorias } from './provisorias';
 
-describe('Home', () => {
-  let component: Home;
-  let fixture: ComponentFixture<Home>;
+describe('Provisorias', () => {
+  let component: Provisorias;
+  let fixture: ComponentFixture<Provisorias>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Home],
+      imports: [Provisorias],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), provideApiConfiguration('')],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Home);
+    fixture = TestBed.createComponent(Provisorias);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

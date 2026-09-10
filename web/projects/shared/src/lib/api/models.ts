@@ -7,6 +7,8 @@ export type { ConfiguracaoKitLitoral } from './models/configuracao-kit-litoral';
 export type { ConfiguracaoVersaoResponse } from './models/configuracao-versao-response';
 export type { CriarRascunhoRequest } from './models/criar-rascunho-request';
 export type { CustoDisponibilidade } from './models/custo-disponibilidade';
+export type { DistribuidoraRequest } from './models/distribuidora-request';
+export type { DistribuidoraResponse } from './models/distribuidora-response';
 export type { EstrategiaFioBForaCronograma } from './models/estrategia-fio-b-fora-cronograma';
 export type { EstruturaRequest } from './models/estrutura-request';
 export type { EstruturaResponse } from './models/estrutura-response';
