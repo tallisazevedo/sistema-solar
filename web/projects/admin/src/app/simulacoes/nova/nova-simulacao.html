@@ -120,7 +120,7 @@
       </dl>
 
       <button type="button" (click)="gerarProposta()" [disabled]="gerandoProposta()">
-        {{ gerandoProposta() ? 'Gerando PDF...' : 'Gerar proposta (PDF)' }}
+        {{ gerandoProposta() ? 'Gerando PDF... (isso pode levar alguns segundos)' : 'Gerar proposta (PDF)' }}
       </button>
     </section>
   }
