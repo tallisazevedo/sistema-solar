@@ -123,7 +123,7 @@ public sealed class GeradorPdfProposta : IGeradorPdfProposta
         container.Column(coluna =>
         {
             coluna.Item().Text("Projecao ao longo do horizonte").FontSize(13).Bold();
-            coluna.Item().Text("A economia liquida anual diminui ao longo do tempo pela degradacao do modulo e pelo avanco do cronograma do Fio B.").FontSize(9);
+            coluna.Item().Text("A economia liquida anual diminui ao longo do tempo pela degradacao do modulo e pelo avanco do cronograma do Fio B. Valores em poder de compra de hoje (efeito da inflacao tarifaria removido, docs/02).").FontSize(9);
 
             coluna.Item().Table(tabela =>
             {
@@ -138,14 +138,14 @@ public sealed class GeradorPdfProposta : IGeradorPdfProposta
                 {
                     cabecalho.Cell().Text("Ano").Bold();
                     cabecalho.Cell().Text("Geracao (kWh)").Bold();
-                    cabecalho.Cell().Text("Economia liquida (R$)").Bold();
+                    cabecalho.Cell().Text("Economia liquida em valores de hoje (R$)").Bold();
                 });
 
                 foreach (var ano in resultado.Projecao)
                 {
                     tabela.Cell().Text(ano.AnoCalendario.ToString(PtBr));
                     tabela.Cell().Text(ano.GeracaoAnualKwh.ToString("N0", PtBr));
-                    tabela.Cell().Text(ano.EconomiaLiquidaAnualReais.ToString("N2", PtBr));
+                    tabela.Cell().Text(ano.EconomiaLiquidaAnualEmTermosReaisReais.ToString("N2", PtBr));
                 }
             });
         });
