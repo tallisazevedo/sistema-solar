@@ -7,6 +7,7 @@ import { PremissaOfdecimal } from '../models/premissa-ofdecimal';
 import { PremissaOfEstrategiaFioBForaCronograma } from '../models/premissa-of-estrategia-fio-b-fora-cronograma';
 import { PremissaOfint } from '../models/premissa-ofint';
 import { PremissaOfIReadOnlyListOfPercentualFioBAno } from '../models/premissa-of-i-read-only-list-of-percentual-fio-b-ano';
+import { PremissaOfTextosProposta } from '../models/premissa-of-textos-proposta';
 export interface ConfiguracaoCalculo {
   cronogramaFioB: PremissaOfIReadOnlyListOfPercentualFioBAno;
   custoDisponibilidadePorLigacao: PremissaOfCustoDisponibilidade;
@@ -20,4 +21,5 @@ export interface ConfiguracaoCalculo {
   oversizingMaximo: PremissaOfdecimal;
   performanceRatio: PremissaOfdecimal;
   taxaDesconto: PremissaOfdecimal;
+  textosProposta: PremissaOfTextosProposta;
 }

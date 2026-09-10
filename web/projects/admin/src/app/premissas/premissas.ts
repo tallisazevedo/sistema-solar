@@ -31,7 +31,7 @@ export class Premissas implements OnInit {
   private readonly servico = inject(PremissasService);
   private readonly auth = inject(AuthService);
 
-  private readonly chavesEspeciais = ['cronogramaFioB', 'kitLitoral', 'custoDisponibilidadePorLigacao'];
+  private readonly chavesEspeciais = ['cronogramaFioB', 'kitLitoral', 'custoDisponibilidadePorLigacao', 'textosProposta'];
 
   protected readonly rotulos = ROTULOS_PREMISSA;
   protected readonly chavesSimples = CHAVES_PREMISSA.filter((c) => !this.chavesEspeciais.includes(c));
@@ -183,6 +183,15 @@ export class Premissas implements OnInit {
         },
         { validators: validarJustificativa },
       ),
+      textosProposta: this.fb.group(
+        {
+          origem: this.fb.control(payload.textosProposta.origem, Validators.required),
+          justificativa: this.fb.control(payload.textosProposta.justificativa ?? ''),
+          disclaimer: this.fb.control(payload.textosProposta.valor.disclaimer, Validators.required),
+          validadeDias: this.fb.control(payload.textosProposta.valor.validadeDias, Validators.required),
+        },
+        { validators: validarJustificativa },
+      ),
     });
   }
 
@@ -240,6 +249,14 @@ export class Premissas implements OnInit {
           trifasica: v['custoDisponibilidadePorLigacao'].trifasica,
         },
       },
+      textosProposta: {
+        origem: v['textosProposta'].origem,
+        justificativa: v['textosProposta'].justificativa || null,
+        valor: {
+          disclaimer: v['textosProposta'].disclaimer,
+          validadeDias: v['textosProposta'].validadeDias,
+        },
+      },
     };
   }
 
@@ -265,6 +282,11 @@ export class Premissas implements OnInit {
         origem: ORIGEM_PROVISORIO,
         justificativa: 'Valores iniciais a definir.',
         valor: { monofasica: 30, bifasica: 50, trifasica: 100 },
+      },
+      textosProposta: {
+        origem: ORIGEM_PROVISORIO,
+        justificativa: 'Texto inicial a definir.',
+        valor: { disclaimer: 'Proposta sujeita a validacao. Numeros preliminares.', validadeDias: 15 },
       },
     };
   }

@@ -141,6 +141,30 @@
         </label>
       </fieldset>
 
+      <fieldset [class.mudou]="mudou('textosProposta')" formGroupName="textosProposta">
+        <legend>{{ rotulos.textosProposta }}</legend>
+        <label>
+          Origem
+          <select formControlName="origem">
+            @for (rotuloOrigem of origensRotulo; track $index) {
+              <option [value]="$index">{{ rotuloOrigem }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Justificativa
+          <textarea formControlName="justificativa" rows="2"></textarea>
+        </label>
+        <label>
+          Disclaimer impresso na proposta
+          <textarea formControlName="disclaimer" rows="3"></textarea>
+        </label>
+        <label>
+          Validade da proposta (dias)
+          <input type="number" formControlName="validadeDias" />
+        </label>
+      </fieldset>
+
       <div class="acoes">
         <button type="button" (click)="salvar()">Salvar rascunho</button>
         @if (ehDono()) {

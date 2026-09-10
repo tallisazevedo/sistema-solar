@@ -5,11 +5,13 @@ import {
   ApiConfiguration,
   EntradaSimulacaoRequest,
   MunicipioHspResponse,
+  PropostaResponse,
   SimulacaoDetalheResponse,
   SimulacaoResumoResponse,
   apiSimulacoesGet$Json,
   apiSimulacoesIdGet$Json,
   apiSimulacoesPost$Json,
+  apiSimulacoesSimulacaoIdPropostaPost$Json,
   apiTarifasMunicipiosGet$Json,
 } from 'shared';
 
@@ -32,5 +34,16 @@ export class SimulacoesService {
 
   listarMunicipios(): Observable<MunicipioHspResponse[]> {
     return apiTarifasMunicipiosGet$Json(this.http, this.apiConfig.rootUrl).pipe(map((r) => r.body));
+  }
+
+  gerarProposta(simulacaoId: string): Observable<PropostaResponse> {
+    return apiSimulacoesSimulacaoIdPropostaPost$Json(this.http, this.apiConfig.rootUrl, { simulacaoId }).pipe(map((r) => r.body));
+  }
+
+  // O client gerado nao cobre download binario (a rota nao declara um schema de
+  // resposta no OpenAPI); HttpClient direto com responseType: 'blob' e o jeito
+  // padrao do Angular de baixar um arquivo autenticado via interceptor.
+  baixarPdf(propostaId: string): Observable<Blob> {
+    return this.http.get(`${this.apiConfig.rootUrl}/api/propostas/${propostaId}/pdf`, { responseType: 'blob' });
   }
 }

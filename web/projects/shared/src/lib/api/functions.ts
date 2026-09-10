@@ -117,6 +117,12 @@ export type { ApiTarifasMunicipiosIdPut$Params as ApiTarifasMunicipiosIdPut$Para
 export { apiTarifasMunicipiosIdPut as apiTarifasMunicipiosIdPut } from './fn/municipios-hsp/api-tarifas-municipios-id-put';
 export type { ApiTarifasMunicipiosIdDelete$Params as ApiTarifasMunicipiosIdDelete$Params } from './fn/municipios-hsp/api-tarifas-municipios-id-delete';
 export { apiTarifasMunicipiosIdDelete as apiTarifasMunicipiosIdDelete } from './fn/municipios-hsp/api-tarifas-municipios-id-delete';
+export type { ApiSimulacoesSimulacaoIdPropostaPost$Plain$Params as ApiSimulacoesSimulacaoIdPropostaPost$Plain$Params } from './fn/propostas/api-simulacoes-simulacao-id-proposta-post-plain';
+export { apiSimulacoesSimulacaoIdPropostaPost$Plain as apiSimulacoesSimulacaoIdPropostaPost$Plain } from './fn/propostas/api-simulacoes-simulacao-id-proposta-post-plain';
+export type { ApiSimulacoesSimulacaoIdPropostaPost$Json$Params as ApiSimulacoesSimulacaoIdPropostaPost$Json$Params } from './fn/propostas/api-simulacoes-simulacao-id-proposta-post-json';
+export { apiSimulacoesSimulacaoIdPropostaPost$Json as apiSimulacoesSimulacaoIdPropostaPost$Json } from './fn/propostas/api-simulacoes-simulacao-id-proposta-post-json';
+export type { ApiPropostasIdPdfGet$Params as ApiPropostasIdPdfGet$Params } from './fn/propostas/api-propostas-id-pdf-get';
+export { apiPropostasIdPdfGet as apiPropostasIdPdfGet } from './fn/propostas/api-propostas-id-pdf-get';
 export type { ApiSimulacoesGet$Plain$Params as ApiSimulacoesGet$Plain$Params } from './fn/simulacoes/api-simulacoes-get-plain';
 export { apiSimulacoesGet$Plain as apiSimulacoesGet$Plain } from './fn/simulacoes/api-simulacoes-get-plain';
 export type { ApiSimulacoesGet$Json$Params as ApiSimulacoesGet$Json$Params } from './fn/simulacoes/api-simulacoes-get-json';

@@ -11,6 +11,7 @@ export const ROTULOS_PREMISSA = {
   limiteKwpRoteamentoHumano: 'Limite de kWp para roteamento humano',
   kitLitoral: 'Kit litoral (municipios e raio)',
   custoDisponibilidadePorLigacao: 'Custo de disponibilidade por ligacao',
+  textosProposta: 'Textos da proposta (disclaimer e validade)',
 } as const;
 
 export type ChavePremissa = keyof typeof ROTULOS_PREMISSA;

@@ -26,6 +26,7 @@ export class NovaSimulacao implements OnInit {
   protected readonly enviando = signal(false);
   protected readonly erro = signal<string | null>(null);
   protected readonly resultado = signal<SimulacaoDetalheResponse | null>(null);
+  protected readonly gerandoProposta = signal(false);
 
   protected readonly formulario = this.fb.nonNullable.group({
     consumoMedio: this.fb.nonNullable.control(500, Validators.required),
@@ -92,5 +93,35 @@ export class NovaSimulacao implements OnInit {
           this.erro.set('Nao foi possivel gerar a simulacao. Confira os dados e se ha uma versao de configuracao publicada.');
         },
       });
+  }
+
+  protected gerarProposta(): void {
+    const simulacaoId = this.resultado()?.id;
+    if (!simulacaoId) {
+      return;
+    }
+
+    this.gerandoProposta.set(true);
+    this.erro.set(null);
+
+    this.servico.gerarProposta(simulacaoId).subscribe({
+      next: (proposta) => {
+        this.servico.baixarPdf(proposta.id).subscribe({
+          next: (blob) => {
+            this.gerandoProposta.set(false);
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+          },
+          error: () => {
+            this.gerandoProposta.set(false);
+            this.erro.set('Proposta criada, mas nao foi possivel baixar o PDF.');
+          },
+        });
+      },
+      error: () => {
+        this.gerandoProposta.set(false);
+        this.erro.set('Nao foi possivel gerar a proposta.');
+      },
+    });
   }
 }

@@ -118,6 +118,10 @@
         <dt>TIR</dt>
         <dd>{{ detalhe.resultado.tir !== null ? (detalhe.resultado.tir | number: '1.2-2') : 'sem raiz no intervalo' }}</dd>
       </dl>
+
+      <button type="button" (click)="gerarProposta()" [disabled]="gerandoProposta()">
+        {{ gerandoProposta() ? 'Gerando PDF...' : 'Gerar proposta (PDF)' }}
+      </button>
     </section>
   }
 </section>
