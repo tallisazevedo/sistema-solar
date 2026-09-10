@@ -7,6 +7,7 @@ using SolarES.Api;
 using SolarES.Aplicacao.Compartilhado;
 using SolarES.Aplicacao.Configuracao;
 using SolarES.Aplicacao.Identidade;
+using SolarES.Aplicacao.Simulacoes;
 using SolarES.Infraestrutura.Identidade;
 using SolarES.Infraestrutura.Persistencia;
 using SolarES.Infraestrutura.Persistencia.Repositorios;
@@ -30,6 +31,9 @@ builder.Services.AddScoped(typeof(IRepositorioCrud<>), typeof(EfRepositorioCrud<
 builder.Services.AddScoped<IUsuarioRepository, EfUsuarioRepository>();
 builder.Services.AddScoped<IGeradorTokenJwt, GeradorTokenJwt>();
 builder.Services.AddScoped<AutenticacaoAppService>();
+
+builder.Services.AddScoped<ISimulacaoRepository, EfSimulacaoRepository>();
+builder.Services.AddScoped<SimulacaoAppService>();
 
 var segredoJwt = builder.Configuration["Jwt:Segredo"]
     ?? throw new InvalidOperationException("Configuracao 'Jwt:Segredo' ausente.");
