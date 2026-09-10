@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, retry, timer } from 'rxjs';
 import {
   ApiConfiguration,
   EntradaSimulacaoRequest,
@@ -45,5 +45,23 @@ export class SimulacoesService {
   // padrao do Angular de baixar um arquivo autenticado via interceptor.
   baixarPdf(propostaId: string): Observable<Blob> {
     return this.http.get(`${this.apiConfig.rootUrl}/api/propostas/${propostaId}/pdf`, { responseType: 'blob' });
+  }
+
+  // T21: geracao do PDF e assincrona (job do Hangfire) -- logo apos o POST, o arquivo
+  // pode ainda nao existir (404). Tenta de novo a cada 1s por ate ~15s, que cobre a
+  // janela normal (job roda em milissegundos com Postgres local); qualquer outro erro
+  // desiste na hora.
+  aguardarEGerar(propostaId: string): Observable<Blob> {
+    return this.baixarPdf(propostaId).pipe(
+      retry({
+        count: 15,
+        delay: (erro) => {
+          if (erro instanceof HttpErrorResponse && erro.status === 404) {
+            return timer(1000);
+          }
+          throw erro;
+        },
+      }),
+    );
   }
 }

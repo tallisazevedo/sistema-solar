@@ -106,7 +106,7 @@ export class NovaSimulacao implements OnInit {
 
     this.servico.gerarProposta(simulacaoId).subscribe({
       next: (proposta) => {
-        this.servico.baixarPdf(proposta.id).subscribe({
+        this.servico.aguardarEGerar(proposta.id).subscribe({
           next: (blob) => {
             this.gerandoProposta.set(false);
             const url = URL.createObjectURL(blob);

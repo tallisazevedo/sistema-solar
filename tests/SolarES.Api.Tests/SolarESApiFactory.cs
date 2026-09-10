@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Hangfire;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -34,6 +35,12 @@ public sealed class SolarESApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<DbContextOptions<SolarESDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<SolarESDbContext>>();
             services.AddDbContext<SolarESDbContext>(options => options.UseInMemoryDatabase(_nomeBase));
+
+            // Program.cs aponta o Hangfire pro Postgres real (JobStorage.Current e' estatico).
+            // Reconfigurar aqui, ainda durante o Build() do host de teste (antes do
+            // AddHangfireServer() iniciar e tentar conectar), evita depender de Postgres
+            // rodando so' pros testes de API.
+            services.AddHangfire(cfg => cfg.UseInMemoryStorage());
         });
     }
 

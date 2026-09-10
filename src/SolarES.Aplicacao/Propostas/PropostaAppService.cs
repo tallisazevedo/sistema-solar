@@ -1,8 +1,7 @@
-using System.Text.Json;
+using Hangfire;
 using SolarES.Aplicacao.Configuracao;
 using SolarES.Aplicacao.Simulacoes;
 using SolarES.Dominio.Proposta;
-using SolarES.Dominio.Simulacao;
 using PropostaEntidade = SolarES.Dominio.Proposta.Proposta;
 
 namespace SolarES.Aplicacao.Propostas;
@@ -11,7 +10,8 @@ public sealed class PropostaAppService(
     IPropostaRepository propostaRepositorio,
     ISimulacaoRepository simulacaoRepositorio,
     IConfiguracaoVersaoRepository configuracaoRepositorio,
-    IGeradorPdfProposta geradorPdf,
+    IArmazenamentoPdf armazenamento,
+    IBackgroundJobClient jobs,
     TimeProvider relogio)
 {
     public async Task<PropostaEntidade> GerarAsync(Guid simulacaoId, CancellationToken ct)
@@ -41,6 +41,10 @@ public sealed class PropostaAppService(
         propostaRepositorio.Adicionar(proposta);
         await propostaRepositorio.SalvarAlteracoesAsync(ct);
 
+        // So enfileira -- o metodo devolve antes do PDF existir, entao o POST nunca
+        // espera a geracao (aceite da T21: "geracao nao bloqueia request").
+        jobs.Enqueue<GerarPdfPropostaJob>(job => job.ExecutarAsync(proposta.Id, CancellationToken.None));
+
         return proposta;
     }
 
@@ -49,18 +53,14 @@ public sealed class PropostaAppService(
         var proposta = await propostaRepositorio.ObterPorIdAsync(propostaId, ct)
             ?? throw new InvalidOperationException("Proposta nao encontrada.");
 
-        // Sempre a versao de configuracao gravada na proposta, nunca a ativa --
-        // recalcular uma proposta antiga tem que reproduzir o numero original.
-        var configuracaoVersao = await configuracaoRepositorio.ObterPorIdAsync(proposta.ConfiguracaoVersaoId, ct)
-            ?? throw new InvalidOperationException("Versao de configuracao da proposta nao encontrada.");
+        if (proposta.ArquivoPdfUrl is null)
+        {
+            throw new PropostaAindaNaoGeradaException(proposta.Numero);
+        }
 
-        var simulacao = await simulacaoRepositorio.ObterPorIdAsync(proposta.SimulacaoId, ct)
-            ?? throw new InvalidOperationException("Simulacao da proposta nao encontrada.");
+        var pdf = await armazenamento.LerAsync(proposta.ArquivoPdfUrl, ct)
+            ?? throw new InvalidOperationException($"Arquivo do PDF da proposta '{proposta.Numero}' nao encontrado no armazenamento.");
 
-        var resultado = JsonSerializer.Deserialize<ResultadoSimulacao>(simulacao.ResultadoSnapshot)
-            ?? throw new InvalidOperationException("Nao foi possivel ler o resultado congelado da simulacao.");
-
-        var pdf = geradorPdf.Gerar(proposta.Numero, proposta.ValidaAte, configuracaoVersao.Payload, resultado);
         return (pdf, proposta.Numero);
     }
 }
