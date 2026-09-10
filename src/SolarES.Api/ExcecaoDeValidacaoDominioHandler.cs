@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using SolarES.Aplicacao.Propostas;
 
 namespace SolarES.Api;
 
@@ -12,6 +13,21 @@ public sealed class ExcecaoDeValidacaoDominioHandler : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
+        // PDF ainda gerando (T21, job assincrono) e "nao encontrado ainda", nao
+        // "entrada invalida" -- 404, nao 400.
+        if (exception is PropostaAindaNaoGeradaException aindaNaoGerada)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "PDF ainda nao disponivel.",
+                Detail = aindaNaoGerada.Message,
+            }, cancellationToken);
+
+            return true;
+        }
+
         if (exception is not (ArgumentException or InvalidOperationException))
         {
             return false;

@@ -66,7 +66,23 @@ public class PropostasApiTests : IClassFixture<SolarESApiFactory>
         Assert.StartsWith("PROP-", proposta!.Numero, StringComparison.Ordinal);
         Assert.True(proposta.ValidaAte > DateTimeOffset.UtcNow);
 
-        var pdfResponse = await _cliente.GetAsync($"/api/propostas/{proposta.Id}/pdf");
+        // T21: geracao e assincrona (job do Hangfire) -- o POST nao espera o PDF ficar
+        // pronto, entao o teste espera o job rodar (Hangfire.InMemory processa em
+        // background, mesmo raciocinio do "aguardarEGerar" do frontend).
+        HttpResponseMessage pdfResponse;
+        var tentativas = 0;
+        do
+        {
+            pdfResponse = await _cliente.GetAsync($"/api/propostas/{proposta.Id}/pdf");
+            if (pdfResponse.StatusCode == HttpStatusCode.OK)
+            {
+                break;
+            }
+
+            Assert.Equal(HttpStatusCode.NotFound, pdfResponse.StatusCode);
+            await Task.Delay(200);
+        } while (++tentativas < 25);
+
         Assert.Equal(HttpStatusCode.OK, pdfResponse.StatusCode);
         Assert.Equal("application/pdf", pdfResponse.Content.Headers.ContentType?.MediaType);
         var pdfBytes = await pdfResponse.Content.ReadAsByteArrayAsync();

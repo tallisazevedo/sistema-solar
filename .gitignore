@@ -484,3 +484,6 @@ $RECYCLE.BIN/
 fixtures/brutas/
 *.pdf
 .env
+
+# T21: armazenamento local de PDFs de proposta (Pdfs:DiretorioArmazenamento)
+src/SolarES.Api/App_Data/

@@ -1,4 +1,6 @@
 using System.Text;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +43,18 @@ builder.Services.AddScoped<SimulacaoAppService>();
 
 builder.Services.AddScoped<IPropostaRepository, EfPropostaRepository>();
 builder.Services.AddScoped<IGeradorPdfProposta, GeradorPdfProposta>();
+builder.Services.AddScoped<IArmazenamentoPdf, ArmazenamentoPdfEmDisco>();
+builder.Services.AddScoped<GerarPdfPropostaJob>();
 builder.Services.AddScoped<PropostaAppService>();
+
+builder.Services.AddHangfire(cfg => cfg
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(options =>
+        options.UseNpgsqlConnection(builder.Configuration.GetConnectionString("SolarES")),
+        new PostgreSqlStorageOptions { SchemaName = "hangfire" }));
+builder.Services.AddHangfireServer();
 
 var segredoJwt = builder.Configuration["Jwt:Segredo"]
     ?? throw new InvalidOperationException("Configuracao 'Jwt:Segredo' ausente.");
@@ -86,6 +99,15 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// AllowAnonymous: sem isso, o FallbackPolicy (RequireAuthenticatedUser, pensado pra
+// API JWT) intercepta a requisicao do dashboard antes do
+// AcessoLocalHangfireDashboardFilter rodar -- o controle de acesso daqui e' o filtro
+// de loopback acima, nao o bearer da Api.
+app.MapHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = [new AcessoLocalHangfireDashboardFilter()],
+}).AllowAnonymous();
 
 app.Run();
 
