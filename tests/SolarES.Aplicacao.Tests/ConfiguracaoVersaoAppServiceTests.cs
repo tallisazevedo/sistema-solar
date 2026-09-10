@@ -27,10 +27,10 @@ public class ConfiguracaoVersaoAppServiceTests
         var (servico, _) = CriarServico(new FakeTimeProvider(DateTimeOffset.UtcNow));
         var payload = ConfiguracaoCalculoBaseline.Criar();
 
-        await servico.CriarRascunhoAsync(1, payload, null, CancellationToken.None);
+        await servico.CriarRascunhoAsync(payload, null, CancellationToken.None);
 
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => servico.CriarRascunhoAsync(2, payload, null, CancellationToken.None));
+            () => servico.CriarRascunhoAsync(payload, null, CancellationToken.None));
     }
 
     [Fact]
@@ -39,10 +39,10 @@ public class ConfiguracaoVersaoAppServiceTests
         var (servico, contexto) = CriarServico(new FakeTimeProvider(DateTimeOffset.UtcNow));
         var payload = ConfiguracaoCalculoBaseline.Criar();
 
-        var primeiraVersao = await servico.CriarRascunhoAsync(1, payload, null, CancellationToken.None);
+        var primeiraVersao = await servico.CriarRascunhoAsync(payload, null, CancellationToken.None);
         await servico.PublicarAsync(primeiraVersao.Id, Guid.NewGuid(), CancellationToken.None);
 
-        var segundaVersao = await servico.CriarRascunhoAsync(2, payload, null, CancellationToken.None);
+        var segundaVersao = await servico.CriarRascunhoAsync(payload, null, CancellationToken.None);
         await servico.PublicarAsync(segundaVersao.Id, Guid.NewGuid(), CancellationToken.None);
 
         var publicadas = await contexto.ConfiguracoesVersao
@@ -56,6 +56,7 @@ public class ConfiguracaoVersaoAppServiceTests
         Assert.Equal(segundaVersao.Id, publicadas[0].Id);
         Assert.Single(arquivadas);
         Assert.Equal(primeiraVersao.Id, arquivadas[0].Id);
+        Assert.Equal(primeiraVersao.Numero + 1, segundaVersao.Numero);
     }
 
     [Fact]
@@ -73,7 +74,7 @@ public class ConfiguracaoVersaoAppServiceTests
     {
         var (servico, _) = CriarServico(new FakeTimeProvider(DateTimeOffset.UtcNow));
         var payload = ConfiguracaoCalculoBaseline.Criar();
-        var versao = await servico.CriarRascunhoAsync(1, payload, null, CancellationToken.None);
+        var versao = await servico.CriarRascunhoAsync(payload, null, CancellationToken.None);
 
         await servico.PublicarAsync(versao.Id, Guid.NewGuid(), CancellationToken.None);
         var ativa = await servico.ObterVersaoAtivaAsync(CancellationToken.None);

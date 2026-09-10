@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using SolarES.Api;
+using SolarES.Aplicacao.Compartilhado;
 using SolarES.Aplicacao.Configuracao;
 using SolarES.Infraestrutura.Persistencia;
 using SolarES.Infraestrutura.Persistencia.Repositorios;
@@ -17,6 +19,10 @@ builder.Services.AddDbContext<SolarESDbContext>(options =>
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IConfiguracaoVersaoRepository, ConfiguracaoVersaoRepository>();
 builder.Services.AddScoped<ConfiguracaoVersaoAppService>();
+builder.Services.AddScoped(typeof(IRepositorioCrud<>), typeof(EfRepositorioCrud<>));
+
+builder.Services.AddExceptionHandler<ExcecaoDeValidacaoDominioHandler>();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
@@ -26,6 +32,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseExceptionHandler();
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
@@ -33,3 +41,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program;
