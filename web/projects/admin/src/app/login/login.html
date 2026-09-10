@@ -1,0 +1,23 @@
+<main class="login">
+  <h1>SolarES admin</h1>
+
+  <form [formGroup]="formulario" (ngSubmit)="entrar()">
+    <label>
+      Email
+      <input type="email" formControlName="email" autocomplete="username" />
+    </label>
+
+    <label>
+      Senha
+      <input type="password" formControlName="senha" autocomplete="current-password" />
+    </label>
+
+    @if (erro()) {
+      <p class="erro" role="alert">Email ou senha invalidos.</p>
+    }
+
+    <button type="submit" [disabled]="formulario.invalid || enviando()">
+      {{ enviando() ? 'Entrando...' : 'Entrar' }}
+    </button>
+  </form>
+</main>
