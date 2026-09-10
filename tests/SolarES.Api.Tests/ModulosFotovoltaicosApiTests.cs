@@ -20,6 +20,8 @@ public class ModulosFotovoltaicosApiTests : IClassFixture<SolarESApiFactory>
     [Fact]
     public async Task CrudCompleto_CriarListarObterAtualizarRemover()
     {
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.DonoEmail, SolarESApiFactory.DonoSenha);
+
         var criarResponse = await _cliente.PostAsJsonAsync("/api/catalogo/modulos-fotovoltaicos", CriarRequestValido());
         Assert.Equal(HttpStatusCode.Created, criarResponse.StatusCode);
         var criado = await criarResponse.Content.ReadFromJsonAsync<ModuloFotovoltaicoResponse>();
@@ -49,6 +51,7 @@ public class ModulosFotovoltaicosApiTests : IClassFixture<SolarESApiFactory>
     [Fact]
     public async Task Criar_ComPotenciaNegativa_Retorna400()
     {
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.DonoEmail, SolarESApiFactory.DonoSenha);
         var requestInvalido = CriarRequestValido() with { PotenciaW = -10 };
 
         var response = await _cliente.PostAsJsonAsync("/api/catalogo/modulos-fotovoltaicos", requestInvalido);

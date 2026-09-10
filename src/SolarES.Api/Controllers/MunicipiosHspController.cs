@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SolarES.Aplicacao.Compartilhado;
 using SolarES.Api.Contratos;
+using SolarES.Dominio.Identidade;
 using SolarES.Dominio.Tarifas;
 
 namespace SolarES.Api.Controllers;
@@ -23,6 +25,7 @@ public sealed class MunicipiosHspController(IRepositorioCrud<MunicipioHsp> repos
         return entidade is null ? NotFound() : Ok(MunicipioHspResponse.DeEntidade(entidade));
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpPost]
     public async Task<ActionResult<MunicipioHspResponse>> Criar(MunicipioHspRequest request, CancellationToken ct)
     {
@@ -34,6 +37,7 @@ public sealed class MunicipiosHspController(IRepositorioCrud<MunicipioHsp> repos
         return CreatedAtAction(nameof(ObterPorId), new { id = entidade.Id }, response);
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Atualizar(Guid id, MunicipioHspRequest request, CancellationToken ct)
     {
@@ -56,6 +60,7 @@ public sealed class MunicipiosHspController(IRepositorioCrud<MunicipioHsp> repos
         return NoContent();
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Remover(Guid id, CancellationToken ct)
     {

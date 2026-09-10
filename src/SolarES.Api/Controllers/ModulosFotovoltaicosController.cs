@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SolarES.Aplicacao.Compartilhado;
 using SolarES.Api.Contratos;
 using SolarES.Dominio.Catalogo;
+using SolarES.Dominio.Identidade;
 
 namespace SolarES.Api.Controllers;
 
@@ -23,6 +25,7 @@ public sealed class ModulosFotovoltaicosController(IRepositorioCrud<ModuloFotovo
         return entidade is null ? NotFound() : Ok(ModuloFotovoltaicoResponse.DeEntidade(entidade));
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpPost]
     public async Task<ActionResult<ModuloFotovoltaicoResponse>> Criar(ModuloFotovoltaicoRequest request, CancellationToken ct)
     {
@@ -34,6 +37,7 @@ public sealed class ModulosFotovoltaicosController(IRepositorioCrud<ModuloFotovo
         return CreatedAtAction(nameof(ObterPorId), new { id = entidade.Id }, response);
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Atualizar(Guid id, ModuloFotovoltaicoRequest request, CancellationToken ct)
     {
@@ -56,6 +60,7 @@ public sealed class ModulosFotovoltaicosController(IRepositorioCrud<ModuloFotovo
         return NoContent();
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Remover(Guid id, CancellationToken ct)
     {

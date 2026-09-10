@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SolarES.Aplicacao.Compartilhado;
 using SolarES.Api.Contratos;
 using SolarES.Dominio.Catalogo;
+using SolarES.Dominio.Identidade;
 
 namespace SolarES.Api.Controllers;
 
@@ -23,6 +25,7 @@ public sealed class EstruturasController(IRepositorioCrud<Estrutura> repositorio
         return entidade is null ? NotFound() : Ok(EstruturaResponse.DeEntidade(entidade));
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpPost]
     public async Task<ActionResult<EstruturaResponse>> Criar(EstruturaRequest request, CancellationToken ct)
     {
@@ -34,6 +37,7 @@ public sealed class EstruturasController(IRepositorioCrud<Estrutura> repositorio
         return CreatedAtAction(nameof(ObterPorId), new { id = entidade.Id }, response);
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Atualizar(Guid id, EstruturaRequest request, CancellationToken ct)
     {
@@ -52,6 +56,7 @@ public sealed class EstruturasController(IRepositorioCrud<Estrutura> repositorio
         return NoContent();
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Remover(Guid id, CancellationToken ct)
     {

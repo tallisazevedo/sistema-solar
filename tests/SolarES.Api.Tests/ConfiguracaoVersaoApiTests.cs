@@ -17,6 +17,8 @@ public class ConfiguracaoVersaoApiTests : IClassFixture<SolarESApiFactory>
     [Fact]
     public async Task FluxoCompleto_CriarRascunho_NaoPermiteSegundo_PublicarExpoeComoAtiva()
     {
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.DonoEmail, SolarESApiFactory.DonoSenha);
+
         var payload = ConfiguracaoCalculoBaseline.Criar();
         var criarRequest = new CriarRascunhoRequest(payload, "Rascunho inicial via API.");
 
@@ -29,14 +31,13 @@ public class ConfiguracaoVersaoApiTests : IClassFixture<SolarESApiFactory>
         var segundoRascunhoResponse = await _cliente.PostAsJsonAsync("/api/configuracao/rascunhos", criarRequest);
         Assert.Equal(HttpStatusCode.BadRequest, segundoRascunhoResponse.StatusCode);
 
-        var publicarResponse = await _cliente.PostAsJsonAsync(
-            $"/api/configuracao/rascunhos/{rascunho.Id}/publicar",
-            new PublicarRascunhoRequest(Guid.NewGuid()));
+        var publicarResponse = await _cliente.PostAsync($"/api/configuracao/rascunhos/{rascunho.Id}/publicar", null);
         Assert.Equal(HttpStatusCode.NoContent, publicarResponse.StatusCode);
 
         var ativa = await _cliente.GetFromJsonAsync<ConfiguracaoVersaoResponse>("/api/configuracao/ativa");
         Assert.NotNull(ativa);
         Assert.Equal(rascunho.Id, ativa!.Id);
         Assert.Equal(StatusConfiguracaoVersao.Publicada, ativa.Status);
+        Assert.NotNull(ativa.PublicadaPorUsuarioId);
     }
 }

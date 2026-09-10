@@ -9,8 +9,6 @@ public sealed record CriarRascunhoRequest(
 
 public sealed record ConfiguracaoCalculoRequest([Required] ConfiguracaoCalculo Payload);
 
-public sealed record PublicarRascunhoRequest([Required] Guid UsuarioId);
-
 public sealed record ConfiguracaoVersaoResponse(
     Guid Id,
     int Numero,

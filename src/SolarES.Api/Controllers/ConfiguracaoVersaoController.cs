@@ -1,6 +1,9 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SolarES.Aplicacao.Configuracao;
 using SolarES.Api.Contratos;
+using SolarES.Dominio.Identidade;
 
 namespace SolarES.Api.Controllers;
 
@@ -22,6 +25,7 @@ public sealed class ConfiguracaoVersaoController(ConfiguracaoVersaoAppService se
         return versao is null ? NotFound() : Ok(ConfiguracaoVersaoResponse.DeEntidade(versao));
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpPost("rascunhos")]
     public async Task<ActionResult<ConfiguracaoVersaoResponse>> CriarRascunho(CriarRascunhoRequest request, CancellationToken ct)
     {
@@ -30,6 +34,7 @@ public sealed class ConfiguracaoVersaoController(ConfiguracaoVersaoAppService se
         return CreatedAtAction(nameof(ObterRascunho), null, response);
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpPut("rascunhos/{id:guid}/payload")]
     public async Task<IActionResult> AtualizarPayload(Guid id, ConfiguracaoCalculoRequest request, CancellationToken ct)
     {
@@ -44,10 +49,12 @@ public sealed class ConfiguracaoVersaoController(ConfiguracaoVersaoAppService se
         return NoContent();
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpPost("rascunhos/{id:guid}/publicar")]
-    public async Task<IActionResult> Publicar(Guid id, PublicarRascunhoRequest request, CancellationToken ct)
+    public async Task<IActionResult> Publicar(Guid id, CancellationToken ct)
     {
-        await servico.PublicarAsync(id, request.UsuarioId, ct);
+        var usuarioId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        await servico.PublicarAsync(id, usuarioId, ct);
         return NoContent();
     }
 }

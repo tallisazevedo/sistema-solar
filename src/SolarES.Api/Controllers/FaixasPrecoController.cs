@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SolarES.Aplicacao.Compartilhado;
 using SolarES.Api.Contratos;
+using SolarES.Dominio.Identidade;
 using SolarES.Dominio.Precificacao;
 
 namespace SolarES.Api.Controllers;
@@ -23,6 +25,7 @@ public sealed class FaixasPrecoController(IRepositorioCrud<FaixaPreco> repositor
         return entidade is null ? NotFound() : Ok(FaixaPrecoResponse.DeEntidade(entidade));
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpPost]
     public async Task<ActionResult<FaixaPrecoResponse>> Criar(FaixaPrecoRequest request, CancellationToken ct)
     {
@@ -34,6 +37,7 @@ public sealed class FaixasPrecoController(IRepositorioCrud<FaixaPreco> repositor
         return CreatedAtAction(nameof(ObterPorId), new { id = entidade.Id }, response);
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Atualizar(Guid id, FaixaPrecoRequest request, CancellationToken ct)
     {
@@ -54,6 +58,7 @@ public sealed class FaixasPrecoController(IRepositorioCrud<FaixaPreco> repositor
         return NoContent();
     }
 
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Remover(Guid id, CancellationToken ct)
     {

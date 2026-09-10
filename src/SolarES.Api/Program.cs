@@ -1,7 +1,13 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using SolarES.Api;
 using SolarES.Aplicacao.Compartilhado;
 using SolarES.Aplicacao.Configuracao;
+using SolarES.Aplicacao.Identidade;
+using SolarES.Infraestrutura.Identidade;
 using SolarES.Infraestrutura.Persistencia;
 using SolarES.Infraestrutura.Persistencia.Repositorios;
 
@@ -21,6 +27,34 @@ builder.Services.AddScoped<IConfiguracaoVersaoRepository, ConfiguracaoVersaoRepo
 builder.Services.AddScoped<ConfiguracaoVersaoAppService>();
 builder.Services.AddScoped(typeof(IRepositorioCrud<>), typeof(EfRepositorioCrud<>));
 
+builder.Services.AddScoped<IUsuarioRepository, EfUsuarioRepository>();
+builder.Services.AddScoped<IGeradorTokenJwt, GeradorTokenJwt>();
+builder.Services.AddScoped<AutenticacaoAppService>();
+
+var segredoJwt = builder.Configuration["Jwt:Segredo"]
+    ?? throw new InvalidOperationException("Configuracao 'Jwt:Segredo' ausente.");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Emissor"],
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audiencia"],
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(segredoJwt)),
+            ValidateLifetime = true,
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build());
+
 builder.Services.AddExceptionHandler<ExcecaoDeValidacaoDominioHandler>();
 builder.Services.AddProblemDetails();
 
@@ -29,13 +63,14 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
 }
 
 app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
