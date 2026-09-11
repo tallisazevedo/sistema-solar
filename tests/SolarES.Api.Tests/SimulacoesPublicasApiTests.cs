@@ -8,6 +8,9 @@ using SolarES.Dominio.Catalogo;
 using SolarES.Dominio.Configuracao;
 using SolarES.Dominio.Simulacao;
 using SolarES.Dominio.Tarifas;
+using SolarES.Dominio.Lead;
+using SolarES.Aplicacao.Leads;
+using SolarES.Dominio.Premissas;
 using SolarES.Infraestrutura.Persistencia;
 
 namespace SolarES.Api.Tests;
@@ -144,6 +147,146 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         var respostaAdministrativa = await _cliente.SendAsync(administrativa);
 
         Assert.False(respostaAdministrativa.Headers.Contains("Access-Control-Allow-Origin"));
+    }
+
+    [Fact]
+    public async Task Dada_CalibracaoPendente_Quando_CapturaLead_Entao_NaoEmiteProposta()
+    {
+        const string codigoIbge = "4444444";
+        await PrepararCenarioAsync(codigoIbge);
+        _cliente.DefaultRequestHeaders.Authorization = null;
+        var criar = await _cliente.PostAsJsonAsync("/api/publico/simulacoes",
+            new CriarSimulacaoPublicaRequest(500m, null, TipoLigacao.Monofasica,
+                PerfilImovel.Residencial, codigoIbge, TipoTelhado.Ceramico, 1000m, false));
+        var simulacao = await criar.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>();
+
+        using var formulario = FormularioLead(consentimento: true);
+        var response = await _cliente.PostAsync($"/api/publico/simulacoes/{simulacao!.Id}/lead", formulario);
+        var resultado = await response.Content.ReadFromJsonAsync<CapturarLeadPublicoResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(nameof(DesfechoCapturaLead.CalibracaoPendente), resultado!.Desfecho);
+        using var escopo = _factory.Services.CreateScope();
+        var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        Assert.Contains(await contexto.Leads.ToListAsync(), lead => lead.SimulacaoId == simulacao.Id);
+        Assert.DoesNotContain(await contexto.Propostas.ToListAsync(), proposta => proposta.SimulacaoId == simulacao.Id);
+    }
+
+    [Fact]
+    public async Task Dado_ConsentimentoAusente_Quando_CapturaLead_Entao_NaoPersisteLead()
+    {
+        const string codigoIbge = "3333333";
+        await PrepararCenarioAsync(codigoIbge);
+        _cliente.DefaultRequestHeaders.Authorization = null;
+        var criar = await _cliente.PostAsJsonAsync("/api/publico/simulacoes",
+            new CriarSimulacaoPublicaRequest(500m, null, TipoLigacao.Monofasica,
+                PerfilImovel.Residencial, codigoIbge, TipoTelhado.Ceramico, 1000m, false));
+        var simulacao = await criar.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>();
+
+        using var formulario = FormularioLead(consentimento: false);
+        var response = await _cliente.PostAsync($"/api/publico/simulacoes/{simulacao!.Id}/lead", formulario);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var escopo = _factory.Services.CreateScope();
+        var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        Assert.DoesNotContain(await contexto.Leads.ToListAsync(), lead => lead.SimulacaoId == simulacao.Id);
+    }
+
+    [Fact]
+    public async Task Dada_SimulacaoRoteada_Quando_CapturaLead_Entao_NaoEmiteProposta()
+    {
+        const string codigoIbge = "2222222";
+        await PrepararCenarioAsync(codigoIbge);
+        _cliente.DefaultRequestHeaders.Authorization = null;
+        var criar = await _cliente.PostAsJsonAsync("/api/publico/simulacoes",
+            new CriarSimulacaoPublicaRequest(500m, null, TipoLigacao.Monofasica,
+                PerfilImovel.Residencial, codigoIbge, TipoTelhado.Ceramico, 1000m, true));
+        var simulacao = await criar.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>();
+
+        using var formulario = FormularioLead(consentimento: true);
+        var response = await _cliente.PostAsync($"/api/publico/simulacoes/{simulacao!.Id}/lead", formulario);
+        var resultado = await response.Content.ReadFromJsonAsync<CapturarLeadPublicoResponse>();
+
+        Assert.Equal(nameof(DesfechoCapturaLead.RoteadoParaHumano), resultado!.Desfecho);
+        using var escopo = _factory.Services.CreateScope();
+        var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        Assert.DoesNotContain(await contexto.Propostas.ToListAsync(), proposta => proposta.SimulacaoId == simulacao.Id);
+    }
+
+    [Fact]
+    public async Task Dada_VersaoConfirmadaGravadaNaSimulacao_Quando_CapturaLead_Entao_EmiteProposta()
+    {
+        const string codigoIbge = "1111111";
+        await PrepararCenarioAsync(codigoIbge);
+        Guid simulacaoId;
+        using (var escopo = _factory.Services.CreateScope())
+        {
+            var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+            var atual = await contexto.ConfiguracoesVersao.SingleAsync(c => c.Status == StatusConfiguracaoVersao.Publicada);
+            atual.Arquivar();
+            var confirmada = ConfiguracaoVersao.CriarRascunho(atual.Numero + 1, ConfiguracaoConfirmada(), "Teste");
+            confirmada.Publicar(Guid.NewGuid(), DateTimeOffset.UtcNow);
+            contexto.ConfiguracoesVersao.Add(confirmada);
+            await contexto.SaveChangesAsync();
+        }
+        _cliente.DefaultRequestHeaders.Authorization = null;
+        var criar = await _cliente.PostAsJsonAsync("/api/publico/simulacoes",
+            new CriarSimulacaoPublicaRequest(500m, null, TipoLigacao.Monofasica,
+                PerfilImovel.Residencial, codigoIbge, TipoTelhado.Ceramico, 1000m, false));
+        simulacaoId = (await criar.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>())!.Id;
+
+        using var formulario = FormularioLead(consentimento: true);
+        var response = await _cliente.PostAsync($"/api/publico/simulacoes/{simulacaoId}/lead", formulario);
+        var resultado = await response.Content.ReadFromJsonAsync<CapturarLeadPublicoResponse>();
+
+        Assert.Equal(nameof(DesfechoCapturaLead.PropostaEmitida), resultado!.Desfecho);
+        using var verificacao = _factory.Services.CreateScope();
+        var banco = verificacao.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        var propostaCriada = Assert.Single(await banco.Propostas.Where(proposta => proposta.SimulacaoId == simulacaoId).ToListAsync());
+        var pdfGerado = false;
+        for (var tentativa = 0; tentativa < 25 && !pdfGerado; tentativa++)
+        {
+            await Task.Delay(200);
+            await banco.Entry(propostaCriada).ReloadAsync();
+            pdfGerado = propostaCriada.ArquivoPdfUrl is not null;
+        }
+        Assert.True(pdfGerado, "O job assíncrono não gerou o PDF da proposta.");
+        var publicada = await banco.ConfiguracoesVersao.SingleAsync(c => c.Status == StatusConfiguracaoVersao.Publicada);
+        publicada.Arquivar();
+        var baseline = ConfiguracaoVersao.CriarRascunho(publicada.Numero + 1, ConfiguracaoCalculoBaseline.Criar(), "Teste");
+        baseline.Publicar(Guid.NewGuid(), DateTimeOffset.UtcNow);
+        banco.ConfiguracoesVersao.Add(baseline);
+        await banco.SaveChangesAsync();
+    }
+
+    private static ConfiguracaoCalculo ConfiguracaoConfirmada()
+    {
+        var b = ConfiguracaoCalculoBaseline.Criar();
+        return new(
+            new(b.PerformanceRatio.Valor, OrigemPremissa.FontePublica),
+            new(b.DegradacaoAnual.Valor, OrigemPremissa.FontePublica),
+            new(b.InflacaoTarifaria.Valor, OrigemPremissa.FontePublica),
+            new(b.TaxaDesconto.Valor, OrigemPremissa.FontePublica),
+            new(b.HorizonteAnos.Valor, OrigemPremissa.FontePublica),
+            new(b.OversizingMaximo.Valor, OrigemPremissa.FontePublica),
+            new(b.FatorOrientacaoPadrao.Valor, OrigemPremissa.FontePublica),
+            b.CronogramaFioB,
+            new(b.EstrategiaFioBForaCronograma.Valor, OrigemPremissa.FontePublica),
+            new(b.LimiteKwpRoteamentoHumano.Valor, OrigemPremissa.FontePublica),
+            new(b.KitLitoral.Valor, OrigemPremissa.FontePublica),
+            b.CustoDisponibilidadePorLigacao,
+            new(b.TextosProposta.Valor, OrigemPremissa.FontePublica));
+    }
+
+    private static MultipartFormDataContent FormularioLead(bool consentimento)
+    {
+        var formulario = new MultipartFormDataContent();
+        formulario.Add(new StringContent("Maria Silva"), "Nome");
+        formulario.Add(new StringContent("27999999999"), "Telefone");
+        formulario.Add(new StringContent("maria@exemplo.com"), "Email");
+        formulario.Add(new StringContent(nameof(CanalPreferido.Email)), "CanalPreferido");
+        formulario.Add(new StringContent(consentimento.ToString()), "Consentimento");
+        return formulario;
     }
 
     private async Task PrepararCenarioAsync(string codigoIbge)

@@ -73,6 +73,44 @@
         Valores em calibração. Esta é uma estimativa preliminar sujeita a visita técnica.
       </p>
     }
+    @if (desfecho(); as estado) {
+      <section class="confirmacao">
+        @if (estado === 'PropostaEmitida') {
+          <h2>Proposta emitida</h2>
+          <p>Estamos preparando o PDF e enviaremos pelo canal escolhido.</p>
+        } @else if (estado === 'RoteadoParaHumano') {
+          <h2>Um engenheiro vai avaliar</h2>
+          <p>Um consultor entrará em contato para entender seu projeto.</p>
+        } @else {
+          <h2>Um consultor vai entrar em contato</h2>
+          <p>A estimativa ainda está em calibração e nenhuma proposta definitiva foi emitida.</p>
+        }
+      </section>
+    } @else {
+      <form class="contato-form" (submit)="deixarContato($event)">
+        <h2>Receba os próximos passos</h2>
+        <p>Usaremos seus dados para entrar em contato sobre esta simulação.</p>
+        <label>Nome<input name="Nome" required /></label>
+        <label>Telefone<input name="Telefone" type="tel" required /></label>
+        <label>E-mail<input name="Email" type="email" required /></label>
+        <label
+          >Canal preferido<select name="CanalPreferido">
+            <option value="Email">E-mail</option>
+            <option value="Whatsapp">WhatsApp</option>
+          </select></label
+        >
+        <label class="consentimento"
+          ><input name="Consentimento" type="checkbox" value="true" required /> Aceito receber
+          contato sobre esta simulação.</label
+        >
+        @if (erroContato()) {
+          <p class="erro" role="alert">{{ erroContato() }}</p>
+        }
+        <button type="submit" [disabled]="enviando()">
+          {{ enviando() ? 'Enviando…' : 'Quero receber contato' }}
+        </button>
+      </form>
+    }
     <a class="voltar" routerLink="/simular">Voltar e alterar meus dados</a>
   } @else if (erro()) {
     <h1>Não encontramos esta simulação</h1>

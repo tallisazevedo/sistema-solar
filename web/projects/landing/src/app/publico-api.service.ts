@@ -30,6 +30,8 @@ export interface SimulacaoPublica {
   projecao: { ano: number; anoCalendario: number; economiaLiquidaAnualReais: number }[] | null;
 }
 
+export type DesfechoCapturaLead = 'CalibracaoPendente' | 'RoteadoParaHumano' | 'PropostaEmitida';
+
 export class PublicoApiService {
   listarMunicipios(): Promise<MunicipioPublico[]> {
     return this.obter<MunicipioPublico[]>('/api/publico/municipios');
@@ -45,6 +47,10 @@ export class PublicoApiService {
 
   obterSimulacao(id: string): Promise<SimulacaoPublica> {
     return this.obter<SimulacaoPublica>(`/api/publico/simulacoes/${id}`);
+  }
+
+  capturarLead(id: string, formulario: FormData): Promise<{ desfecho: DesfechoCapturaLead }> {
+    return this.obter(`/api/publico/simulacoes/${id}/lead`, { method: 'POST', body: formulario });
   }
 
   private obter<T>(url: string, init?: RequestInit): Promise<T> {

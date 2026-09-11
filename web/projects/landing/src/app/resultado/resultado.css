@@ -35,6 +35,42 @@ header a,
   padding: 0.65rem 0;
   margin: 0;
 }
+.contato-form,
+.confirmacao {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 2rem;
+  padding: 1.4rem;
+  background: white;
+}
+.contato-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 700;
+}
+.contato-form input,
+.contato-form select,
+.contato-form button {
+  min-height: 3rem;
+  padding: 0.65rem;
+  font: inherit;
+}
+.contato-form button {
+  border: 0;
+  background: var(--cor-acao);
+  color: white;
+  font-weight: 800;
+}
+.consentimento {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+.consentimento input {
+  width: 1.2rem;
+}
+.erro {
+  color: #9f1c18;
+}
 .etapa {
   margin-top: 3rem;
   color: var(--cor-destaque);

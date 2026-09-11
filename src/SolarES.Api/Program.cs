@@ -11,6 +11,7 @@ using SolarES.Aplicacao.Configuracao;
 using SolarES.Aplicacao.Identidade;
 using SolarES.Aplicacao.Propostas;
 using SolarES.Aplicacao.Simulacoes;
+using SolarES.Aplicacao.Leads;
 using SolarES.Infraestrutura.Identidade;
 using SolarES.Infraestrutura.Pdf;
 using SolarES.Infraestrutura.Persistencia;
@@ -48,6 +49,8 @@ builder.Services.AddScoped<AutenticacaoAppService>();
 
 builder.Services.AddScoped<ISimulacaoRepository, EfSimulacaoRepository>();
 builder.Services.AddScoped<SimulacaoAppService>();
+builder.Services.AddScoped<ILeadRepository, EfLeadRepository>();
+builder.Services.AddScoped<LeadAppService>();
 
 builder.Services.AddScoped<IPropostaRepository, EfPropostaRepository>();
 builder.Services.AddScoped<IGeradorPdfProposta, GeradorPdfProposta>();

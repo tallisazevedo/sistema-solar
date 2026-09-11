@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { configurarMetaSemOpenGraph } from '../metadados';
-import { PublicoApiService, SimulacaoPublica } from '../publico-api.service';
+import { DesfechoCapturaLead, PublicoApiService, SimulacaoPublica } from '../publico-api.service';
 
 @Component({
   selector: 'app-resultado',
@@ -17,6 +17,9 @@ export class Resultado implements OnInit {
   private readonly title = inject(Title);
   protected readonly resultado = signal<SimulacaoPublica | null>(null);
   protected readonly erro = signal(false);
+  protected readonly enviando = signal(false);
+  protected readonly erroContato = signal<string | null>(null);
+  protected readonly desfecho = signal<DesfechoCapturaLead | null>(null);
 
   ngOnInit(): void {
     this.title.setTitle('Resultado da simulação | SolarES');
@@ -39,6 +42,21 @@ export class Resultado implements OnInit {
 
   protected formatarMoeda(valor: number): string {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+  }
+
+  protected deixarContato(event: SubmitEvent): void {
+    event.preventDefault();
+    const formulario = event.currentTarget as HTMLFormElement;
+    if (!formulario.reportValidity()) return;
+    this.enviando.set(true);
+    this.erroContato.set(null);
+    this.api
+      .capturarLead(this.route.snapshot.paramMap.get('id')!, new FormData(formulario))
+      .then(({ desfecho }) => this.desfecho.set(desfecho))
+      .catch(() => {
+        this.enviando.set(false);
+        this.erroContato.set('Não foi possível enviar agora. Seus dados continuam aqui.');
+      });
   }
 }
 

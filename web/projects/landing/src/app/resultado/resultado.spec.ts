@@ -101,4 +101,65 @@ describe('Resultado', () => {
     expect(texto).not.toContain('Investimento estimado');
     expect(texto).not.toMatch(/R\$|kWp/);
   });
+
+  it.each([
+    ['CalibracaoPendente', 'Um consultor vai entrar em contato'],
+    ['RoteadoParaHumano', 'Um engenheiro vai avaliar'],
+    ['PropostaEmitida', 'Proposta emitida'],
+  ])('mostra a confirmacao de %s', async (desfecho, mensagem) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((_url: RequestInfo | URL, init?: RequestInit) =>
+        Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve(
+              init?.method === 'POST'
+                ? { desfecho }
+                : {
+                    id: 'simulacao-3',
+                    potenciaKwp: 5,
+                    quantidadeModulos: 9,
+                    investimentoEstimado: 18000,
+                    economiaMensalAno1: 400,
+                    paybackMeses: 45,
+                    calibracaoPendente: false,
+                    coberturaPercentual: 100,
+                    kitLitoral: false,
+                    instalacaoRecomendada: true,
+                    roteadaParaHumano: false,
+                    motivoRoteamento: null,
+                    projecao: [],
+                  },
+            ),
+        } as Response),
+      ),
+    );
+    await TestBed.configureTestingModule({
+      imports: [Resultado],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { paramMap: convertToParamMap({ id: 'simulacao-3' }) },
+          },
+        },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(Resultado);
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+    const pagina = fixture.nativeElement as HTMLElement;
+    pagina.querySelector<HTMLInputElement>('[name="Nome"]')!.value = 'Maria';
+    pagina.querySelector<HTMLInputElement>('[name="Telefone"]')!.value = '27999999999';
+    pagina.querySelector<HTMLInputElement>('[name="Email"]')!.value = 'maria@exemplo.com';
+    pagina.querySelector<HTMLInputElement>('[name="Consentimento"]')!.checked = true;
+    pagina.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+
+    expect(pagina.textContent).toContain(mensagem);
+  });
 });

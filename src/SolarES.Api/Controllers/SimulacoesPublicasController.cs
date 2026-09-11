@@ -5,6 +5,7 @@ using System.Text.Json;
 using SolarES.Api.Contratos;
 using SolarES.Aplicacao.Compartilhado;
 using SolarES.Aplicacao.Simulacoes;
+using SolarES.Aplicacao.Leads;
 using SolarES.Dominio.Simulacao;
 using SolarES.Dominio.Tarifas;
 
@@ -16,8 +17,22 @@ namespace SolarES.Api.Controllers;
 [Route("api/publico")]
 public sealed class SimulacoesPublicasController(
     SimulacaoAppService simulacaoAppService,
+    LeadAppService leadAppService,
     IRepositorioCrud<MunicipioHsp> municipiosRepositorio) : ControllerBase
 {
+    [HttpPost("simulacoes/{id:guid}/lead")]
+    public async Task<ActionResult<CapturarLeadPublicoResponse>> CapturarLead(Guid id,
+        [FromForm] CapturarLeadPublicoRequest request, CancellationToken ct)
+    {
+        try
+        {
+            var desfecho = await leadAppService.CapturarPublicoAsync(id, request.Nome, request.Telefone,
+                request.Email, request.CanalPreferido, request.Consentimento, ct);
+            return Ok(new CapturarLeadPublicoResponse(desfecho.ToString()));
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+    }
+
     [HttpGet("municipios")]
     public async Task<ActionResult<IReadOnlyList<MunicipioPublicoResponse>>> ListarMunicipios(CancellationToken ct)
     {
