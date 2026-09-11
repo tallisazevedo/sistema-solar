@@ -11,7 +11,8 @@ public enum PerfilImovel
 }
 
 public sealed record CriarSimulacaoPublicaRequest(
-    [Range(0.01, double.MaxValue)] decimal ConsumoMedioMensalKwh,
+    decimal? ConsumoMedioMensalKwh,
+    IReadOnlyList<decimal>? HistoricoConsumoKwh,
     TipoLigacao TipoLigacao,
     PerfilImovel PerfilImovel,
     [Required, MaxLength(7)] string MunicipioCodigoIbge,
@@ -23,9 +24,15 @@ public sealed record MunicipioPublicoResponse(string CodigoIbge, string Nome);
 
 public sealed record SimulacaoPublicaResponse(
     Guid Id,
-    decimal PotenciaKwp,
-    int QuantidadeModulos,
-    decimal InvestimentoEstimado,
-    decimal EconomiaMensalAno1,
+    decimal? PotenciaKwp,
+    int? QuantidadeModulos,
+    decimal? InvestimentoEstimado,
+    decimal? EconomiaMensalAno1,
     int? PaybackMeses,
-    bool CalibracaoPendente);
+    bool CalibracaoPendente,
+    decimal? CoberturaPercentual,
+    bool KitLitoral,
+    bool InstalacaoRecomendada,
+    bool RoteadaParaHumano,
+    string? MotivoRoteamento,
+    IReadOnlyList<AnoProjecao>? Projecao);

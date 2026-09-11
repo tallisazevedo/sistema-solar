@@ -1,75 +1,110 @@
 <header><a routerLink="/">☀ SolarES</a></header>
 <main>
-  <p class="etapa">Estimativa solar</p>
+  <p class="etapa">Etapa {{ etapa() }} de 3</p>
   <h1>Conte um pouco sobre seu imóvel</h1>
   <p>Com alguns dados da sua conta, calculamos uma primeira estimativa.</p>
   <form (submit)="simular($event)">
-    <label
-      >Consumo médio mensal (kWh)<input
-        type="number"
-        name="consumoMedioMensalKwh"
-        value="500"
-        min="1"
-        required
-    /></label>
-    <label
-      >Buscar município<input
-        type="search"
-        (input)="atualizarBusca($event)"
-        placeholder="Digite o nome"
-    /></label>
-    <label
-      >Município
-      <select name="municipioCodigoIbge" required>
-        <option value="">Selecione</option>
-        @for (municipio of municipiosFiltrados; track municipio.codigoIbge) {
-          <option [value]="municipio.codigoIbge">{{ municipio.nome }}</option>
-        }
-      </select>
-    </label>
-    <label
-      >Tipo de ligação
-      <select name="tipoLigacao">
-        <option value="0">Monofásica</option>
-        <option value="1">Bifásica</option>
-        <option value="2">Trifásica</option>
-      </select>
-    </label>
-    <label
-      >Perfil do imóvel
-      <select name="perfilImovel">
-        <option value="0">Residencial</option>
-        <option value="1">Rural</option>
-        <option value="2">Comercial</option>
-      </select>
-    </label>
-    <label
-      >Tipo de telhado
-      <select name="tipoTelhado">
-        <option value="0">Cerâmico</option>
-        <option value="1">Metálico</option>
-        <option value="2">Fibrocimento</option>
-        <option value="3">Laje</option>
-        <option value="4">Solo</option>
-      </select>
-    </label>
-    <label
-      >Área disponível (m²)<input
-        type="number"
-        name="areaDisponivelM2"
-        value="50"
-        min="0.01"
-        step="0.01"
-        required
-    /></label>
-    <label class="checkbox"
-      ><input type="checkbox" name="possuiGeracaoPropria" /> Já possuo geração solar</label
-    >
+    <fieldset data-etapa="1" [hidden]="etapa() !== 1">
+      <legend>Seu consumo</legend>
+      <div class="alternador">
+        <button type="button" (click)="alternarConsumo(false)">Consumo médio</button
+        ><button type="button" (click)="alternarConsumo(true)">Últimos 12 meses</button>
+      </div>
+      @if (!consumoMensal()) {
+        <label
+          >Consumo médio mensal (kWh)<small
+            >Você encontra o kWh no quadro de consumo da conta de energia.</small
+          ><input type="number" name="consumoMedioMensalKwh" value="500" min="1" required
+        /></label>
+      } @else {
+        <div class="meses">
+          @for (mes of meses; track mes; let indice = $index) {
+            <label
+              >{{ mes }} (kWh)<input type="number" [name]="'consumoMes' + indice" min="1" required
+            /></label>
+          }
+        </div>
+      }
+    </fieldset>
+    <fieldset data-etapa="2" [hidden]="etapa() !== 2">
+      <legend>Local e perfil</legend>
+      <label
+        >Buscar município<input
+          type="search"
+          (input)="atualizarBusca($event)"
+          placeholder="Digite o nome"
+      /></label>
+      <label
+        >Município
+        <select name="municipioCodigoIbge" required>
+          <option value="">Selecione</option>
+          @for (municipio of municipiosFiltrados; track municipio.codigoIbge) {
+            <option [value]="municipio.codigoIbge">{{ municipio.nome }}</option>
+          }
+        </select>
+      </label>
+    </fieldset>
+    <fieldset data-etapa="3" [hidden]="etapa() !== 3">
+      <legend>Espaço disponível</legend>
+      <label
+        >Tipo de ligação
+        <small>Ela aparece nos dados da unidade consumidora da sua conta.</small>
+        <select name="tipoLigacao">
+          <option value="0">Monofásica</option>
+          <option value="1">Bifásica</option>
+          <option value="2">Trifásica</option>
+        </select>
+      </label>
+      <label
+        >Perfil do imóvel
+        <select name="perfilImovel">
+          <option value="0">Residencial</option>
+          <option value="1">Rural</option>
+          <option value="2">Comercial</option>
+        </select>
+      </label>
+      <label
+        >Tipo de telhado
+        <select name="tipoTelhado">
+          <option value="0">Cerâmico</option>
+          <option value="1">Metálico</option>
+          <option value="2">Fibrocimento</option>
+          <option value="3">Laje</option>
+          <option value="4">Solo</option>
+        </select>
+      </label>
+      <label
+        >Largura disponível (m)<input
+          type="number"
+          name="largura"
+          value="5"
+          min="0.01"
+          step="0.01"
+          required
+      /></label>
+      <label
+        >Comprimento disponível (m)<input
+          type="number"
+          name="comprimento"
+          value="10"
+          min="0.01"
+          step="0.01"
+          required
+      /></label>
+      <label class="checkbox"
+        ><input type="checkbox" name="possuiGeracaoPropria" /> Já possuo geração solar</label
+      >
+    </fieldset>
     @if (erro()) {
       <p class="erro" role="alert">{{ erro() }}</p>
     }
-    <button type="submit" [disabled]="enviando()">
-      {{ enviando() ? 'Calculando…' : 'Ver minha estimativa' }}
-    </button>
+    <div class="acoes">
+      @if (etapa() > 1) {
+        <button class="secundario" type="button" (click)="voltar()">Voltar</button>
+      }
+      <button type="submit" [disabled]="enviando()">
+        {{ enviando() ? 'Calculando…' : etapa() < 3 ? 'Continuar' : 'Ver minha estimativa' }}
+      </button>
+    </div>
   </form>
 </main>

@@ -17,6 +17,7 @@ describe('Simulador', () => {
   );
 
   beforeEach(async () => {
+    fetchMock.mockClear();
     vi.stubGlobal('fetch', fetchMock);
     await TestBed.configureTestingModule({
       imports: [Simulador],
@@ -38,7 +39,12 @@ describe('Simulador', () => {
     municipio.dispatchEvent(new Event('change'));
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
-    pagina.querySelector('form')!.dispatchEvent(new Event('submit'));
+    const formulario = pagina.querySelector('form')!;
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
     await new Promise((resolve) => setTimeout(resolve, 0));
     await fixture.whenStable();
 
@@ -47,5 +53,26 @@ describe('Simulador', () => {
       expect.objectContaining({ consumoMedioMensalKwh: 500, municipioCodigoIbge: '3205309' }),
     );
     expect(navigate).toHaveBeenCalledWith(['/resultado', 'simulacao-1']);
+  });
+
+  it('mantem os dados quando a API falha', async () => {
+    const pagina = fixture.nativeElement as HTMLElement;
+    const consumo = pagina.querySelector<HTMLInputElement>('[name="consumoMedioMensalKwh"]')!;
+    consumo.value = '777';
+    const municipio = pagina.querySelector<HTMLSelectElement>('[name="municipioCodigoIbge"]')!;
+    municipio.selectedIndex = 1;
+    fetchMock.mockRejectedValueOnce(new Error('indisponivel'));
+    const formulario = pagina.querySelector('form')!;
+
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(consumo.value).toBe('777');
+    expect(pagina.textContent).toContain('Seus dados continuam aqui');
   });
 });

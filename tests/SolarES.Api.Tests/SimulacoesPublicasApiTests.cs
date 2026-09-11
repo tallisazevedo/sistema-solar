@@ -34,7 +34,7 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         Assert.Contains(municipios!, municipio => municipio.CodigoIbge == codigoIbge && municipio.Nome == "Municipio Publico");
 
         var request = new CriarSimulacaoPublicaRequest(
-            500m, TipoLigacao.Monofasica, PerfilImovel.Residencial, codigoIbge,
+            500m, null, TipoLigacao.Monofasica, PerfilImovel.Residencial, codigoIbge,
             TipoTelhado.Ceramico, 1000m, PossuiGeracaoPropria: false);
         var criar = await _cliente.PostAsJsonAsync("/api/publico/simulacoes", request);
 
@@ -45,7 +45,9 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         Assert.True(resultado.CalibracaoPendente);
 
         var reaberta = await _cliente.GetFromJsonAsync<SimulacaoPublicaResponse>($"/api/publico/simulacoes/{resultado.Id}");
-        Assert.Equal(resultado, reaberta);
+        Assert.Equal(resultado.Id, reaberta!.Id);
+        Assert.Equal(resultado.PotenciaKwp, reaberta.PotenciaKwp);
+        Assert.Equal(resultado.Projecao, reaberta.Projecao);
 
         using var escopo = _factory.Services.CreateScope();
         var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
@@ -75,6 +77,48 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         var response = await _cliente.GetAsync($"/api/publico/simulacoes/{detalhe!.Id}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Dado_HistoricoMensal_Quando_CriaSimulacao_Entao_PreservaOsDozeValores()
+    {
+        const string codigoIbge = "6666666";
+        await PrepararCenarioAsync(codigoIbge);
+        _cliente.DefaultRequestHeaders.Authorization = null;
+        var historico = Enumerable.Range(1, 12).Select(mes => 300m + mes).ToList();
+        var request = new CriarSimulacaoPublicaRequest(null, historico, TipoLigacao.Monofasica,
+            PerfilImovel.Residencial, codigoIbge, TipoTelhado.Ceramico, 1000m, false);
+
+        var response = await _cliente.PostAsJsonAsync("/api/publico/simulacoes", request);
+        var resultado = await response.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>();
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        using var escopo = _factory.Services.CreateScope();
+        var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        var persistida = await contexto.Simulacoes.SingleAsync(s => s.Id == resultado!.Id);
+        using var entradas = JsonDocument.Parse(persistida.EntradasSnapshot);
+        Assert.Equal(historico, entradas.RootElement.GetProperty("HistoricoConsumoKwh")
+            .EnumerateArray().Select(valor => valor.GetDecimal()).ToList());
+    }
+
+    [Fact]
+    public async Task Dado_CenarioRoteado_Quando_CriaSimulacao_Entao_NaoExpoeNumeros()
+    {
+        const string codigoIbge = "5555555";
+        await PrepararCenarioAsync(codigoIbge);
+        _cliente.DefaultRequestHeaders.Authorization = null;
+        var request = new CriarSimulacaoPublicaRequest(500m, null, TipoLigacao.Monofasica,
+            PerfilImovel.Residencial, codigoIbge, TipoTelhado.Ceramico, 1000m, true);
+
+        var response = await _cliente.PostAsJsonAsync("/api/publico/simulacoes", request);
+        var resultado = await response.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>();
+
+        Assert.True(resultado!.RoteadaParaHumano);
+        Assert.Null(resultado.PotenciaKwp);
+        Assert.Null(resultado.QuantidadeModulos);
+        Assert.Null(resultado.InvestimentoEstimado);
+        Assert.Null(resultado.EconomiaMensalAno1);
+        Assert.Null(resultado.Projecao);
     }
 
     [Fact]

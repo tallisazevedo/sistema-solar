@@ -15,6 +15,26 @@ header a,
   color: inherit;
   font-weight: 800;
 }
+.contato {
+  display: inline-block;
+  padding: 0.9rem 1.2rem;
+  background: var(--cor-acao);
+  color: white;
+  font-weight: 800;
+}
+.tabela {
+  max-height: 22rem;
+  overflow: auto;
+  background: white;
+  padding: 0 1rem;
+}
+.tabela p {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #d7dfdc;
+  padding: 0.65rem 0;
+  margin: 0;
+}
 .etapa {
   margin-top: 3rem;
   color: var(--cor-destaque);

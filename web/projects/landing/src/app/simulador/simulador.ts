@@ -20,6 +20,22 @@ export class Simulador implements OnInit {
   protected readonly busca = signal('');
   protected readonly enviando = signal(false);
   protected readonly erro = signal<string | null>(null);
+  protected readonly etapa = signal(1);
+  protected readonly consumoMensal = signal(false);
+  protected readonly meses = [
+    'Jan',
+    'Fev',
+    'Mar',
+    'Abr',
+    'Mai',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Set',
+    'Out',
+    'Nov',
+    'Dez',
+  ];
 
   protected get municipiosFiltrados(): MunicipioPublico[] {
     const termo = this.busca().trim().toLocaleLowerCase('pt-BR');
@@ -46,19 +62,42 @@ export class Simulador implements OnInit {
     this.busca.set((event.target as HTMLInputElement).value);
   }
 
+  protected alternarConsumo(mensal: boolean): void {
+    this.consumoMensal.set(mensal);
+  }
+
+  protected voltar(): void {
+    this.etapa.update((valor) => Math.max(1, valor - 1));
+  }
+
   protected simular(event: SubmitEvent): void {
     event.preventDefault();
-    const dados = new FormData(event.currentTarget as HTMLFormElement);
+    const formulario = event.currentTarget as HTMLFormElement;
+    const camposDaEtapa = [
+      ...formulario.querySelectorAll<HTMLElement>(
+        `fieldset[data-etapa="${this.etapa()}"] input, fieldset[data-etapa="${this.etapa()}"] select`,
+      ),
+    ];
+    if (!camposDaEtapa.every((campo) => (campo as HTMLInputElement).reportValidity())) return;
+    if (this.etapa() < 3) {
+      this.etapa.update((valor) => valor + 1);
+      return;
+    }
+    const dados = new FormData(formulario);
+    const historico = this.consumoMensal()
+      ? this.meses.map((_, indice) => Number(dados.get(`consumoMes${indice}`)))
+      : null;
     this.enviando.set(true);
     this.erro.set(null);
     this.api
       .criarSimulacao({
-        consumoMedioMensalKwh: Number(dados.get('consumoMedioMensalKwh')),
+        consumoMedioMensalKwh: historico ? null : Number(dados.get('consumoMedioMensalKwh')),
+        historicoConsumoKwh: historico,
         tipoLigacao: Number(dados.get('tipoLigacao')),
         perfilImovel: Number(dados.get('perfilImovel')),
         municipioCodigoIbge: String(dados.get('municipioCodigoIbge')),
         tipoTelhado: Number(dados.get('tipoTelhado')),
-        areaDisponivelM2: Number(dados.get('areaDisponivelM2')),
+        areaDisponivelM2: Number(dados.get('largura')) * Number(dados.get('comprimento')),
         possuiGeracaoPropria: dados.has('possuiGeracaoPropria'),
       })
       .then(({ id }) => this.router.navigate(['/resultado', id]))

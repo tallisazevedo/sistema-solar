@@ -2,37 +2,78 @@
 <main>
   @if (resultado(); as simulacao) {
     <p class="etapa">Sua estimativa preliminar</p>
-    <h1>Seu imóvel tem potencial para economizar</h1>
-    <section aria-label="Resumo da simulação">
-      <article>
-        <span>Potência</span><strong>{{ formatarNumero(simulacao.potenciaKwp) }} kWp</strong>
-      </article>
-      <article>
-        <span>Módulos</span><strong>{{ simulacao.quantidadeModulos }}</strong>
-      </article>
-      <article>
-        <span>Investimento estimado</span
-        ><strong>{{ formatarMoeda(simulacao.investimentoEstimado) }}</strong>
-      </article>
-      <article>
-        <span>Economia mensal no 1º ano</span
-        ><strong>{{ formatarMoeda(simulacao.economiaMensalAno1) }}</strong>
-      </article>
-      <article>
-        <span>Retorno estimado</span
-        ><strong>{{
-          simulacao.paybackMeses
-            ? formatarNumero(simulacao.paybackMeses / 12, 1) + ' anos'
-            : 'A avaliar'
-        }}</strong>
-      </article>
-    </section>
+    @if (simulacao.roteadaParaHumano) {
+      <h1>Vamos avaliar seu projeto com você</h1>
+      <p class="aviso">
+        {{ simulacao.motivoRoteamento || 'Este cenário precisa de uma análise personalizada.' }}
+      </p>
+      <a class="contato" href="mailto:contato@solares.com.br">Falar com um especialista</a>
+    } @else {
+      <h1>
+        {{
+          simulacao.instalacaoRecomendada
+            ? 'Seu imóvel tem potencial para economizar'
+            : 'Instalação não recomendada'
+        }}
+      </h1>
+      @if (!simulacao.instalacaoRecomendada) {
+        <p class="aviso">
+          Seu consumo está abaixo do mínimo compensável para o tipo de ligação informado.
+        </p>
+      }
+      <section aria-label="Resumo da simulação">
+        <article>
+          <span>Potência</span><strong>{{ formatarNumero(simulacao.potenciaKwp!) }} kWp</strong>
+        </article>
+        <article>
+          <span>Módulos</span><strong>{{ simulacao.quantidadeModulos }}</strong>
+        </article>
+        <article>
+          <span>Investimento estimado</span
+          ><strong>{{ formatarMoeda(simulacao.investimentoEstimado!) }}</strong>
+        </article>
+        <article>
+          <span>Economia mensal no 1º ano</span
+          ><strong>{{ formatarMoeda(simulacao.economiaMensalAno1!) }}</strong>
+        </article>
+        <article>
+          <span>Retorno estimado</span
+          ><strong>{{
+            simulacao.paybackMeses
+              ? formatarNumero(simulacao.paybackMeses / 12, 1) + ' anos'
+              : 'A avaliar'
+          }}</strong>
+        </article>
+      </section>
+      @if (simulacao.coberturaPercentual !== null && simulacao.coberturaPercentual < 100) {
+        <p class="aviso">
+          A área informada permite atender {{ formatarNumero(simulacao.coberturaPercentual, 0) }}%
+          do sistema ideal.
+        </p>
+      }
+      @if (simulacao.kitLitoral) {
+        <p class="aviso">
+          Incluímos o kit litoral, com materiais adequados à maior exposição à maresia.
+        </p>
+      }
+      @if (simulacao.projecao?.length) {
+        <h2>Projeção anual com degradação e Fio B</h2>
+        <div class="tabela" role="table">
+          @for (ano of simulacao.projecao; track ano.ano) {
+            <p>
+              <span>{{ ano.anoCalendario }}</span
+              ><strong>{{ formatarMoeda(ano.economiaLiquidaAnualReais) }}</strong>
+            </p>
+          }
+        </div>
+      }
+    }
     @if (simulacao.calibracaoPendente) {
       <p class="aviso">
         Valores em calibração. Esta é uma estimativa preliminar sujeita a visita técnica.
       </p>
     }
-    <a class="voltar" routerLink="/simular">Alterar meus dados</a>
+    <a class="voltar" routerLink="/simular">Voltar e alterar meus dados</a>
   } @else if (erro()) {
     <h1>Não encontramos esta simulação</h1>
     <a routerLink="/simular">Fazer uma nova estimativa</a>

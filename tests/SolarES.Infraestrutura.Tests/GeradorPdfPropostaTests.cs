@@ -25,6 +25,8 @@ public class GeradorPdfPropostaTests
         Vpl: 34004.94m,
         RoteadaParaHumano: false,
         MotivoRoteamento: null,
+        KitLitoral: false,
+        InstalacaoRecomendada: true,
         Projecao: Enumerable.Range(1, 25)
             .Select(ano => new AnoProjecao(ano, 2025 + ano, 3000m - ano * 10m, 1200m - ano * 15m, 1200m - ano * 15m))
             .ToList());

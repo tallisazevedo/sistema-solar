@@ -4,7 +4,8 @@ export interface MunicipioPublico {
 }
 
 export interface CriarSimulacaoPublica {
-  consumoMedioMensalKwh: number;
+  consumoMedioMensalKwh: number | null;
+  historicoConsumoKwh: number[] | null;
   tipoLigacao: number;
   perfilImovel: number;
   municipioCodigoIbge: string;
@@ -15,12 +16,18 @@ export interface CriarSimulacaoPublica {
 
 export interface SimulacaoPublica {
   id: string;
-  potenciaKwp: number;
-  quantidadeModulos: number;
-  investimentoEstimado: number;
-  economiaMensalAno1: number;
+  potenciaKwp: number | null;
+  quantidadeModulos: number | null;
+  investimentoEstimado: number | null;
+  economiaMensalAno1: number | null;
   paybackMeses: number | null;
   calibracaoPendente: boolean;
+  coberturaPercentual: number | null;
+  kitLitoral: boolean;
+  instalacaoRecomendada: boolean;
+  roteadaParaHumano: boolean;
+  motivoRoteamento: string | null;
+  projecao: { ano: number; anoCalendario: number; economiaLiquidaAnualReais: number }[] | null;
 }
 
 export class PublicoApiService {

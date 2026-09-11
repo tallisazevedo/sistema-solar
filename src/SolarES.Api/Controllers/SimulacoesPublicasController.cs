@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 using SolarES.Api.Contratos;
 using SolarES.Aplicacao.Compartilhado;
 using SolarES.Aplicacao.Simulacoes;
@@ -31,7 +32,14 @@ public sealed class SimulacoesPublicasController(
         CriarSimulacaoPublicaRequest request,
         CancellationToken ct)
     {
-        var resultado = await simulacaoAppService.CriarPublicaAsync(ParaEntrada(request), ct);
+        var historico = ObterHistorico(request);
+        if (historico is null)
+        {
+            ModelState.AddModelError(nameof(request.HistoricoConsumoKwh),
+                "Informe o consumo médio ou exatamente os 12 consumos mensais, todos maiores que zero.");
+            return ValidationProblem(ModelState);
+        }
+        var resultado = await simulacaoAppService.CriarPublicaAsync(ParaEntrada(request, historico), ct);
         var response = ParaResponse(resultado);
         return CreatedAtAction(nameof(ObterPorId), new { id = response.Id }, response);
     }
@@ -43,8 +51,17 @@ public sealed class SimulacoesPublicasController(
         return resultado is null ? NotFound() : Ok(ParaResponse(resultado));
     }
 
-    private static EntradaSimulacao ParaEntrada(CriarSimulacaoPublicaRequest request) => new(
-        Enumerable.Repeat(request.ConsumoMedioMensalKwh, 12).ToList(),
+    private static IReadOnlyList<decimal>? ObterHistorico(CriarSimulacaoPublicaRequest request)
+    {
+        if (request.HistoricoConsumoKwh is { Count: 12 } mensal && mensal.All(valor => valor > 0))
+            return mensal;
+        if (request.HistoricoConsumoKwh is null && request.ConsumoMedioMensalKwh is > 0)
+            return Enumerable.Repeat(request.ConsumoMedioMensalKwh.Value, 12).ToList();
+        return null;
+    }
+
+    private static EntradaSimulacao ParaEntrada(CriarSimulacaoPublicaRequest request, IReadOnlyList<decimal> historico) => new(
+        historico,
         request.TipoLigacao,
         request.PerfilImovel switch
         {
@@ -61,13 +78,22 @@ public sealed class SimulacoesPublicasController(
     private static SimulacaoPublicaResponse ParaResponse(SimulacaoPublicaResultado resultado)
     {
         var simulacao = resultado.Simulacao;
+        var detalhe = JsonSerializer.Deserialize<ResultadoSimulacao>(simulacao.ResultadoSnapshot)
+            ?? throw new InvalidOperationException("Resultado da simulacao invalido.");
+        var ocultaNumeros = simulacao.RoteadaParaHumano;
         return new(
             simulacao.Id,
-            simulacao.PotenciaKwp,
-            simulacao.QuantidadeModulos,
-            simulacao.Capex,
-            simulacao.EconomiaMensalAno1,
-            simulacao.PaybackMeses,
-            resultado.CalibracaoPendente);
+            ocultaNumeros ? null : simulacao.PotenciaKwp,
+            ocultaNumeros ? null : simulacao.QuantidadeModulos,
+            ocultaNumeros ? null : simulacao.Capex,
+            ocultaNumeros ? null : simulacao.EconomiaMensalAno1,
+            ocultaNumeros ? null : simulacao.PaybackMeses,
+            resultado.CalibracaoPendente,
+            ocultaNumeros ? null : simulacao.CoberturaPercentual,
+            detalhe.KitLitoral,
+            detalhe.InstalacaoRecomendada,
+            simulacao.RoteadaParaHumano,
+            simulacao.MotivoRoteamento,
+            ocultaNumeros ? null : detalhe.Projecao);
     }
 }
