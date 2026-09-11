@@ -92,3 +92,20 @@ solar e regulação brasileira é específico e o palpite costuma sair errado.
 - Uma branch por tarefa do plano de execução: `feat/T07-motor-financeiro`
 - Toda regra de negócio nova entra com teste no mesmo commit
 - Valores monetários e tarifas em `decimal`, nunca `double`
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as GitHub issues in `tallisazevedo/sistema-solar` (via `gh`). See
+`docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Os 5 papéis canônicos, sem renomear: `needs-triage`, `needs-info`, `ready-for-agent`,
+`ready-for-human`, `wontfix`. Veja `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Contexto único; o glossário de domínio é `docs/02-dominio-e-glossario.md` (não
+`CONTEXT.md`), sem ADRs ainda. Veja `docs/agents/domain.md`.

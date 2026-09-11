@@ -487,3 +487,6 @@ fixtures/brutas/
 
 # T21: armazenamento local de PDFs de proposta (Pdfs:DiretorioArmazenamento)
 src/SolarES.Api/App_Data/
+
+# Handoff entre sessões do Claude Code (artefato de sessão, nao documentacao do projeto)
+HANDOFF.md
