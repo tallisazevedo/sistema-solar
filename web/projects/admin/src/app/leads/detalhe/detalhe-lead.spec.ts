@@ -115,5 +115,55 @@ describe('DetalheLead', () => {
     fixture.detectChanges();
     const texto = fixture.nativeElement.textContent;
     expect(texto).toContain('Lead expurgado em');
+    expect(fixture.nativeElement.textContent).not.toContain('Eliminar dados do lead');
+  });
+
+  it('elimina o lead apos confirmacao e recarrega os dados', async () => {
+    await TestBed.configureTestingModule({
+      imports: [DetalheLead],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideApiConfiguration(''),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: convertToParamMap({ id: '3' }) } },
+        },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(DetalheLead);
+    fixture.detectChanges();
+    const httpMock = TestBed.inject(HttpTestingController);
+    const leadOriginal = {
+      id: '3',
+      nome: 'Maria',
+      telefone: '27999999999',
+      email: 'maria@exemplo.com',
+      canalPreferido: 1,
+      roteadoParaHumano: false,
+      calibracaoPendente: false,
+      possuiAnexo: false,
+      consentimentos: [],
+      resultado: { potenciaInstaladaKwp: 5.5, quantidadeModulos: 10, capex: 20000, economiaMensalAno1: 450 },
+      expurgadoEm: null,
+    };
+    httpMock.expectOne('/api/leads/3').flush(leadOriginal);
+    fixture.detectChanges();
+
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    fixture.nativeElement
+      .querySelectorAll('button')
+      .forEach((botao: HTMLButtonElement) => {
+        if (botao.textContent?.includes('Eliminar dados do lead')) botao.click();
+      });
+
+    httpMock.expectOne('/api/leads/3/eliminacao').flush(null);
+    httpMock
+      .expectOne('/api/leads/3')
+      .flush({ ...leadOriginal, nome: '[expurgado]', expurgadoEm: '2026-09-11T10:00:00Z' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Lead expurgado em');
   });
 });

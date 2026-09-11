@@ -38,6 +38,21 @@ public sealed class ConsultaLeadsAppService(ILeadRepository leads, ISimulacaoRep
         return conteudo is null ? null : new(conteudo, anexo.Tipo);
     }
 
+    /// <summary>Dados do titular legiveis por humano, para atender pedido de acesso via LGPD.</summary>
+    public async Task<ExportacaoLeadResultado?> ObterExportacaoAsync(Guid leadId, CancellationToken ct)
+    {
+        var lead = await leads.ObterPorIdAsync(leadId, ct);
+        if (lead is null) return null;
+        var consentimentos = await leads.ListarConsentimentosAsync(lead.Id, ct);
+        var anexo = await leads.ObterAnexoAsync(lead.Id, ct);
+        return new(lead.Id, lead.Nome, lead.Telefone, lead.Email, lead.Status, lead.CriadoEm,
+            lead.ExpurgadoEm, lead.SimulacaoId,
+            consentimentos.Select(c => new ConsentimentoAdministrativoResultado(
+                c.Finalidade, c.VersaoTexto, c.ConcedidoEm)).ToList(),
+            anexo is null ? null : new AnexoMetadadoResultado(
+                anexo.Tipo, anexo.Tamanho, anexo.RecebidoEm, anexo.DescartarAte, anexo.DescartadoEm));
+    }
+
     private async Task<LeadAdministrativoResultado?> MontarAsync(Lead lead, CancellationToken ct)
     {
         if (lead.SimulacaoId is not { } simulacaoId)
@@ -73,3 +88,8 @@ public sealed record LeadAdministrativoResultado(Guid Id, string Nome, string Te
 public sealed record ConsentimentoAdministrativoResultado(FinalidadeConsentimento Finalidade,
     string VersaoTexto, DateTimeOffset ConcedidoEm);
 public sealed record AnexoContaDownload(byte[] Conteudo, TipoAnexoConta Tipo);
+public sealed record ExportacaoLeadResultado(Guid Id, string Nome, string Telefone, string Email,
+    StatusLead Status, DateTimeOffset CriadoEm, DateTimeOffset? ExpurgadoEm, Guid? SimulacaoId,
+    IReadOnlyList<ConsentimentoAdministrativoResultado> Consentimentos, AnexoMetadadoResultado? Anexo);
+public sealed record AnexoMetadadoResultado(TipoAnexoConta Tipo, long Tamanho, DateTimeOffset RecebidoEm,
+    DateTimeOffset DescartarAte, DateTimeOffset? DescartadoEm);

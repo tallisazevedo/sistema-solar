@@ -44,4 +44,28 @@ export class DetalheLead implements OnInit {
       URL.revokeObjectURL(url);
     });
   }
+
+  protected exportarDados(): void {
+    const lead = this.lead();
+    if (!lead) return;
+    this.servico.exportar(lead.id).subscribe((exportacao) => {
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(exportacao, null, 2)], { type: 'application/json' }),
+      );
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `lead-${lead.id}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  protected eliminarDados(): void {
+    const lead = this.lead();
+    if (!lead) return;
+    if (!window.confirm('Eliminar os dados pessoais deste lead? Essa ação não pode ser desfeita.')) return;
+    this.servico.eliminar(lead.id).subscribe(() => {
+      this.servico.obter(lead.id).subscribe((atualizado) => this.lead.set(atualizado));
+    });
+  }
 }

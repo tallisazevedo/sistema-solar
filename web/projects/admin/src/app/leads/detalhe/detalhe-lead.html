@@ -53,6 +53,13 @@
   @if (item.calibracaoPendente) {
     <p class="aviso">Calibração pendente — proposta não emitida.</p>
   }
+  @if (!item.expurgadoEm) {
+    <section>
+      <h2>Direitos do titular (LGPD)</h2>
+      <button type="button" (click)="exportarDados()">Exportar dados do lead</button>
+      <button type="button" (click)="eliminarDados()">Eliminar dados do lead</button>
+    </section>
+  }
 } @else if (erro()) {
   <h1>Lead não encontrado</h1>
 }

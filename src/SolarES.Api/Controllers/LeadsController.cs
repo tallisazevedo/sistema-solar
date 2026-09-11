@@ -1,15 +1,17 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using SolarES.Api.Contratos;
 using SolarES.Aplicacao.Leads;
+using SolarES.Dominio.Identidade;
 using SolarES.Dominio.Lead;
 
 namespace SolarES.Api.Controllers;
 
 [ApiController]
 [Route("api/leads")]
-public sealed class LeadsController(ConsultaLeadsAppService servico, GerenciarLeadsAppService gerenciador) : ControllerBase
+public sealed class LeadsController(ConsultaLeadsAppService servico, GerenciarLeadsAppService gerenciador,
+    LeadAppService leadAppService) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<LeadResponse>>> Listar([FromQuery] OrigemLead? origem,
@@ -55,6 +57,26 @@ public sealed class LeadsController(ConsultaLeadsAppService servico, GerenciarLe
         };
         return File(anexo.Conteudo, tipo, $"conta.{extensao}");
     }
+
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
+    [HttpGet("{id:guid}/exportacao")]
+    public async Task<ActionResult<ExportacaoLeadResponse>> Exportar(Guid id, CancellationToken ct)
+    {
+        var exportacao = await servico.ObterExportacaoAsync(id, ct);
+        return exportacao is null ? NotFound() : Ok(ParaExportacaoResponse(exportacao));
+    }
+
+    [Authorize(Roles = nameof(PerfilUsuario.Dono))]
+    [HttpPost("{id:guid}/eliminacao")]
+    public async Task<IActionResult> Eliminar(Guid id, CancellationToken ct) =>
+        await leadAppService.EliminarAsync(id, ct) ? NoContent() : NotFound();
+
+    private static ExportacaoLeadResponse ParaExportacaoResponse(ExportacaoLeadResultado exportacao) => new(
+        exportacao.Id, exportacao.Nome, exportacao.Telefone, exportacao.Email, exportacao.Status,
+        exportacao.CriadoEm, exportacao.ExpurgadoEm, exportacao.SimulacaoId,
+        exportacao.Consentimentos.Select(c => new ConsentimentoResponse(c.Finalidade, c.VersaoTexto, c.ConcedidoEm)).ToList(),
+        exportacao.Anexo is null ? null : new AnexoMetadadoResponse(exportacao.Anexo.Tipo, exportacao.Anexo.Tamanho,
+            exportacao.Anexo.RecebidoEm, exportacao.Anexo.DescartarAte, exportacao.Anexo.DescartadoEm));
 
     private static LeadResponse ParaResponse(LeadAdministrativoResultado lead) => new(
         lead.Id, lead.Nome, lead.Telefone, lead.Email, lead.CanalPreferido, lead.Status,

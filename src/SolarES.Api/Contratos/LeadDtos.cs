@@ -14,3 +14,8 @@ public sealed record ConsentimentoResponse(FinalidadeConsentimento Finalidade,
 public sealed record CriarLeadManualRequest(string Nome, string Telefone, string Email, OrigemLead Origem,
     bool ConsentimentoContato, string VersaoTextoConsentimento);
 public sealed record AlterarStatusLeadRequest(StatusLead Status, DateTimeOffset? VisitaTecnicaAgendadaPara);
+public sealed record ExportacaoLeadResponse(Guid Id, string Nome, string Telefone, string Email,
+    StatusLead Status, DateTimeOffset CriadoEm, DateTimeOffset? ExpurgadoEm, Guid? SimulacaoId,
+    IReadOnlyList<ConsentimentoResponse> Consentimentos, AnexoMetadadoResponse? Anexo);
+public sealed record AnexoMetadadoResponse(TipoAnexoConta Tipo, long Tamanho, DateTimeOffset RecebidoEm,
+    DateTimeOffset DescartarAte, DateTimeOffset? DescartadoEm);

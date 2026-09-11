@@ -27,6 +27,25 @@ export interface LeadAdmin {
   expurgadoEm: string | null;
 }
 
+export interface ExportacaoLead {
+  id: string;
+  nome: string;
+  telefone: string;
+  email: string;
+  status: number;
+  criadoEm: string;
+  expurgadoEm: string | null;
+  simulacaoId: string | null;
+  consentimentos: { finalidade: number; versaoTexto: string; concedidoEm: string }[];
+  anexo: {
+    tipo: number;
+    tamanho: number;
+    recebidoEm: string;
+    descartarAte: string;
+    descartadoEm: string | null;
+  } | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LeadsService {
   private readonly http = inject(HttpClient);
@@ -50,5 +69,11 @@ export class LeadsService {
   criarManual(dados: { nome: string; telefone: string; email: string; origem: number;
     consentimentoContato: boolean; versaoTextoConsentimento: string }): Observable<LeadAdmin> {
     return this.http.post<LeadAdmin>(`${this.api.rootUrl}/api/leads`, dados);
+  }
+  exportar(id: string): Observable<ExportacaoLead> {
+    return this.http.get<ExportacaoLead>(`${this.api.rootUrl}/api/leads/${id}/exportacao`);
+  }
+  eliminar(id: string): Observable<void> {
+    return this.http.post<void>(`${this.api.rootUrl}/api/leads/${id}/eliminacao`, null);
   }
 }

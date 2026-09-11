@@ -87,6 +87,17 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
         return DesfechoCapturaLead.PropostaEmitida;
     }
 
+    /// <summary>Eliminacao imediata a pedido do titular -- mesma anonimizacao do expurgo automatico.</summary>
+    public async Task<bool> EliminarAsync(Guid leadId, CancellationToken ct)
+    {
+        var lead = await leads.ObterPorIdAsync(leadId, ct);
+        if (lead is null) return false;
+        var anexo = await leads.ObterAnexoAsync(leadId, ct);
+        await AnonimizacaoLead.ExecutarAsync(lead, anexo, armazenamentoAnexos, relogio.GetUtcNow(), ct);
+        await leads.SalvarAlteracoesAsync(ct);
+        return true;
+    }
+
     private static TipoAnexoConta IdentificarTipoAnexo(byte[] conteudo)
     {
         if (conteudo.AsSpan().StartsWith("%PDF-"u8)) return TipoAnexoConta.Pdf;

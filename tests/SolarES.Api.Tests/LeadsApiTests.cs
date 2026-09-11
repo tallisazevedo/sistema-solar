@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SolarES.Api.Contratos;
+using SolarES.Aplicacao.Leads;
 using SolarES.Dominio.Configuracao;
 using SolarES.Dominio.Lead;
 using SolarES.Dominio.Simulacao;
@@ -97,6 +98,80 @@ public sealed class LeadsApiTests : IClassFixture<SolarESApiFactory>
         Assert.All(encontrados!, lead => Assert.Equal(StatusLead.Novo, lead.Status));
     }
 
+    [Fact]
+    public async Task Dado_Anonimo_Quando_ExportaOuElimina_Entao_RetornaNaoAutorizado()
+    {
+        var id = await PrepararLeadAsync();
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _cliente.GetAsync($"/api/leads/{id}/exportacao")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _cliente.PostAsync($"/api/leads/{id}/eliminacao", null)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Dado_Vendedor_Quando_ExportaOuElimina_Entao_RetornaProibido()
+    {
+        var id = await PrepararLeadAsync();
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.VendedorEmail, SolarESApiFactory.VendedorSenha);
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await _cliente.GetAsync($"/api/leads/{id}/exportacao")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await _cliente.PostAsync($"/api/leads/{id}/eliminacao", null)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Dado_Dono_Quando_Exporta_Entao_RetornaDadosDoTitular()
+    {
+        var id = await PrepararLeadAsync();
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.DonoEmail, SolarESApiFactory.DonoSenha);
+
+        var exportacao = await _cliente.GetFromJsonAsync<ExportacaoLeadResponse>($"/api/leads/{id}/exportacao");
+
+        Assert.Equal("Lead recente", exportacao!.Nome);
+        Assert.Equal("lead@teste.com", exportacao.Email);
+        Assert.Contains(exportacao.Consentimentos, c => c.Finalidade == FinalidadeConsentimento.ContatoComercial);
+        Assert.Null(exportacao.Anexo);
+    }
+
+    [Fact]
+    public async Task Dado_Dono_Quando_Elimina_Entao_AnonimizaAndApagaAnexo()
+    {
+        var (id, caminhoAnexo) = await PrepararLeadComAnexoAsync();
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.DonoEmail, SolarESApiFactory.DonoSenha);
+
+        var resposta = await _cliente.PostAsync($"/api/leads/{id}/eliminacao", null);
+
+        Assert.Equal(HttpStatusCode.NoContent, resposta.StatusCode);
+        using var escopo = _factory.Services.CreateScope();
+        var banco = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        var lead = await banco.Leads.SingleAsync(l => l.Id == id);
+        Assert.Equal("[expurgado]", lead.Nome);
+        Assert.NotNull(lead.ExpurgadoEm);
+        Assert.False(File.Exists(caminhoAnexo));
+    }
+
+    [Fact]
+    public async Task Dado_LeadInexistente_Quando_ExportaOuElimina_Entao_RetornaNaoEncontrado()
+    {
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.DonoEmail, SolarESApiFactory.DonoSenha);
+        var idInexistente = Guid.NewGuid();
+
+        Assert.Equal(HttpStatusCode.NotFound, (await _cliente.GetAsync($"/api/leads/{idInexistente}/exportacao")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _cliente.PostAsync($"/api/leads/{idInexistente}/eliminacao", null)).StatusCode);
+    }
+
+    private async Task<(Guid Id, string CaminhoAnexo)> PrepararLeadComAnexoAsync()
+    {
+        var id = await PrepararLeadAsync();
+        using var escopo = _factory.Services.CreateScope();
+        var banco = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        var armazenamento = escopo.ServiceProvider.GetRequiredService<IArmazenamentoAnexoConta>();
+        var conteudo = "%PDF-1.4 conta teste"u8.ToArray();
+        var caminho = await armazenamento.SalvarAsync(id, TipoAnexoConta.Pdf, conteudo, CancellationToken.None);
+        var recebidoEm = DateTimeOffset.UtcNow;
+        banco.AnexosConta.Add(AnexoConta.Criar(id, TipoAnexoConta.Pdf, conteudo.LongLength, caminho, recebidoEm, recebidoEm.AddDays(90)));
+        await banco.SaveChangesAsync();
+        return (id, caminho);
+    }
+
     private async Task<Guid> PrepararLeadAsync()
     {
         using var escopo = _factory.Services.CreateScope();
@@ -107,7 +182,8 @@ public sealed class LeadsApiTests : IClassFixture<SolarESApiFactory>
         var simulacao = new Simulacao { Id = Guid.NewGuid(), ConfiguracaoVersaoId = versao.Id, Origem = OrigemSimulacao.Landing, EntradasSnapshot = "{}", ResultadoSnapshot = JsonSerializer.Serialize(resultado), PotenciaKwp = 4.4m, QuantidadeModulos = 8, Capex = 15000m, EconomiaMensalAno1 = 400m, CoberturaPercentual = 100m, RoteadaParaHumano = true, CriadoEm = DateTimeOffset.UtcNow, AtualizadoEm = DateTimeOffset.UtcNow };
         var lead = LeadEntidade.Criar("Lead recente", "27999999999", "lead@teste.com", CanalPreferido.Whatsapp, simulacao.Id, Guid.NewGuid(), [FinalidadeConsentimento.ContatoComercial], DateTimeOffset.UtcNow.AddMinutes(1));
         simulacao.LeadId = lead.Id;
-        banco.AddRange(simulacao, lead);
+        var consentimento = ConsentimentoLgpd.Criar(lead.Id, FinalidadeConsentimento.ContatoComercial, "contato-comercial-v1", DateTimeOffset.UtcNow.AddMinutes(1));
+        banco.AddRange(simulacao, lead, consentimento);
         await banco.SaveChangesAsync();
         return lead.Id;
     }
