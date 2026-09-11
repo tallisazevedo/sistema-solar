@@ -14,6 +14,9 @@ public sealed class Lead : EntidadeBase
     public DateTimeOffset? ConsentimentoLgpdEm { get; private set; }
     public StatusLead Status { get; private set; }
     public DateTimeOffset? VisitaTecnicaAgendadaPara { get; private set; }
+    public DateTimeOffset? ExpurgadoEm { get; private set; }
+
+    private const string MarcadorExpurgo = "[expurgado]";
 
     public static Lead Criar(string nome, string telefone, string email, CanalPreferido canalPreferido,
         Guid simulacaoId, Guid municipioId, IReadOnlyCollection<FinalidadeConsentimento> finalidades,
@@ -87,5 +90,17 @@ public sealed class Lead : EntidadeBase
         if (string.IsNullOrWhiteSpace(nome)) throw new ArgumentException("Informe o nome.");
         if (string.IsNullOrWhiteSpace(telefone)) throw new ArgumentException("Informe o telefone.");
         if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Informe o e-mail.");
+    }
+
+    /// <summary>Anonimiza nome, telefone e e-mail; Simulacao e consentimentos permanecem intactos.</summary>
+    public void Expurgar(DateTimeOffset momento)
+    {
+        if (Status == StatusLead.Convertido) throw new InvalidOperationException("Lead convertido não pode ser expurgado.");
+        if (ExpurgadoEm is not null) throw new InvalidOperationException("Lead já foi expurgado.");
+        Nome = MarcadorExpurgo;
+        Telefone = MarcadorExpurgo;
+        Email = MarcadorExpurgo;
+        ExpurgadoEm = momento;
+        AtualizadoEm = momento;
     }
 }

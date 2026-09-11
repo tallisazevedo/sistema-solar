@@ -98,7 +98,7 @@ public sealed class MetricasFunilApiTests : IClassFixture<SolarESApiFactory>
             banco.HistoricosStatusLead.AddRange(historicoLanding, historicoLandingVisita,
                 historicoIndicacaoAtendimento, historicoIndicacaoVisita, historicoIndicacaoConvertido);
             banco.AnexosConta.Add(AnexoConta.Criar(landingComAnexo.Id, TipoAnexoConta.Pdf, 10,
-                "caminho/teste.pdf", agora));
+                "caminho/teste.pdf", agora, agora.AddDays(90)));
             await banco.SaveChangesAsync();
         }
         await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.DonoEmail,

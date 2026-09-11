@@ -66,6 +66,43 @@ public sealed class LeadTests
     }
 
     [Fact]
+    public void Dado_LeadNovo_Quando_Expurga_Entao_AnonimizaDadosPessoais()
+    {
+        var lead = LeadEntidade.Criar("Maria", "27999999999", "maria@exemplo.com", CanalPreferido.Email,
+            Guid.NewGuid(), Guid.NewGuid(), [FinalidadeConsentimento.ContatoComercial], DateTimeOffset.UtcNow);
+        var momento = DateTimeOffset.UtcNow.AddMonths(25);
+
+        lead.Expurgar(momento);
+
+        Assert.Equal("[expurgado]", lead.Nome);
+        Assert.Equal("[expurgado]", lead.Telefone);
+        Assert.Equal("[expurgado]", lead.Email);
+        Assert.Equal(momento, lead.ExpurgadoEm);
+    }
+
+    [Fact]
+    public void Dado_LeadJaExpurgado_Quando_ExpurgaNovamente_Entao_Recusa()
+    {
+        var lead = LeadEntidade.Criar("Maria", "27999999999", "maria@exemplo.com", CanalPreferido.Email,
+            Guid.NewGuid(), Guid.NewGuid(), [FinalidadeConsentimento.ContatoComercial], DateTimeOffset.UtcNow);
+        lead.Expurgar(DateTimeOffset.UtcNow.AddMonths(25));
+
+        Assert.Throws<InvalidOperationException>(() => lead.Expurgar(DateTimeOffset.UtcNow.AddMonths(26)));
+    }
+
+    [Fact]
+    public void Dado_LeadConvertido_Quando_Expurga_Entao_Recusa()
+    {
+        var lead = LeadEntidade.Criar("Maria", "27999999999", "maria@exemplo.com", CanalPreferido.Email,
+            Guid.NewGuid(), Guid.NewGuid(), [FinalidadeConsentimento.ContatoComercial], DateTimeOffset.UtcNow);
+        // Não há ainda um metodo de dominio para marcar Convertido (fluxo da T26);
+        // a reflexao simula esse estado so' para provar a guarda do expurgo.
+        typeof(LeadEntidade).GetProperty(nameof(LeadEntidade.Status))!.SetValue(lead, StatusLead.Convertido);
+
+        Assert.Throws<InvalidOperationException>(() => lead.Expurgar(DateTimeOffset.UtcNow.AddMonths(25)));
+    }
+
+    [Fact]
     public void Dada_FinalidadeEData_Quando_RegistraConsentimento_Entao_PreservaEvidencia()
     {
         var momento = new DateTimeOffset(2026, 9, 11, 10, 0, 0, TimeSpan.Zero);

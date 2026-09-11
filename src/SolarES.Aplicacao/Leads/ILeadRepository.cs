@@ -11,6 +11,7 @@ public interface ILeadRepository
     Task<LeadEntidade?> ObterPorIdAsync(Guid id, CancellationToken ct);
     /// <summary>Quantos leads com o mesmo e-mail ou telefone (normalizados) ja foram criados desde o momento informado -- guarda anti-spam da issue #33.</summary>
     Task<int> ContarPorContatoDesdeAsync(string emailNormalizado, string telefoneNormalizado, DateTimeOffset desde, CancellationToken ct);
+    Task<IReadOnlyList<LeadEntidade>> ListarParaExpurgoAsync(DateTimeOffset criadoAntesDe, CancellationToken ct);
     Task<AnexoConta?> ObterAnexoAsync(Guid leadId, CancellationToken ct);
     Task<IReadOnlyList<AnexoConta>> ListarAnexosParaDescarteAsync(DateTimeOffset ate, CancellationToken ct);
     void AdicionarAnexo(AnexoConta anexo);

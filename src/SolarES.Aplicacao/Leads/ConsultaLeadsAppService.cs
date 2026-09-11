@@ -46,7 +46,7 @@ public sealed class ConsultaLeadsAppService(ILeadRepository leads, ISimulacaoRep
             return new(lead.Id, lead.Nome, lead.Telefone, lead.Email, lead.CanalPreferido,
                 lead.Status, lead.Origem, lead.VisitaTecnicaAgendadaPara, lead.CriadoEm, false, false, false, null, null,
                 consentimentosManuais.Select(c => new ConsentimentoAdministrativoResultado(
-                    c.Finalidade, c.VersaoTexto, c.ConcedidoEm)).ToList());
+                    c.Finalidade, c.VersaoTexto, c.ConcedidoEm)).ToList(), lead.ExpurgadoEm);
         }
         var simulacao = await simulacoes.ObterPorIdAsync(simulacaoId, ct);
         if (simulacao is null) return null;
@@ -60,7 +60,7 @@ public sealed class ConsultaLeadsAppService(ILeadRepository leads, ISimulacaoRep
             lead.Status, lead.Origem, lead.VisitaTecnicaAgendadaPara, lead.CriadoEm, simulacao.RoteadaParaHumano,
             versao.Payload.PossuiPremissaProvisoria(), possuiAnexo, simulacao.Id, resultado,
             consentimentos.Select(c => new ConsentimentoAdministrativoResultado(
-                c.Finalidade, c.VersaoTexto, c.ConcedidoEm)).ToList());
+                c.Finalidade, c.VersaoTexto, c.ConcedidoEm)).ToList(), lead.ExpurgadoEm);
     }
 }
 
@@ -69,7 +69,7 @@ public sealed record LeadAdministrativoResultado(Guid Id, string Nome, string Te
     DateTimeOffset? VisitaTecnicaAgendadaPara, DateTimeOffset CriadoEm,
     bool RoteadoParaHumano, bool CalibracaoPendente, bool PossuiAnexo,
     Guid? SimulacaoId, ResultadoSimulacao? Resultado,
-    IReadOnlyList<ConsentimentoAdministrativoResultado> Consentimentos);
+    IReadOnlyList<ConsentimentoAdministrativoResultado> Consentimentos, DateTimeOffset? ExpurgadoEm);
 public sealed record ConsentimentoAdministrativoResultado(FinalidadeConsentimento Finalidade,
     string VersaoTexto, DateTimeOffset ConcedidoEm);
 public sealed record AnexoContaDownload(byte[] Conteudo, TipoAnexoConta Tipo);

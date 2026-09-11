@@ -84,7 +84,8 @@ builder.Services.AddScoped<LeadAppService>();
 builder.Services.AddSingleton(new ConfiguracaoConsentimentos(
     (builder.Configuration.GetSection("Lgpd:VersoesTextoAceitas").Get<string[]>() ?? []).ToHashSet()));
 builder.Services.AddSingleton(new ConfiguracaoRetencaoLgpd(
-    builder.Configuration.GetValue("Lgpd:PrazoDescarteAnexoDias", 90)));
+    builder.Configuration.GetValue("Lgpd:PrazoDescarteAnexoDias", 90),
+    builder.Configuration.GetValue("Lgpd:PrazoExpurgoLeadMeses", 24)));
 builder.Services.AddScoped<ConsultaLeadsAppService>();
 builder.Services.AddScoped<GerenciarLeadsAppService>();
 builder.Services.AddScoped<IEventoFunilRepository, EfEventoFunilRepository>();
@@ -92,6 +93,7 @@ builder.Services.AddScoped<IExecutorTransacional, EfExecutorTransacional>();
 builder.Services.AddScoped<FunilAppService>();
 builder.Services.AddScoped<IArmazenamentoAnexoConta, ArmazenamentoAnexoContaEmDisco>();
 builder.Services.AddScoped<DescartarAnexosVencidosJob>();
+builder.Services.AddScoped<ExpurgarLeadsInativosJob>();
 
 builder.Services.AddScoped<IPropostaRepository, EfPropostaRepository>();
 builder.Services.AddScoped<IDadosNotificacaoVencimentoQuery, EfDadosNotificacaoVencimentoQuery>();
@@ -238,6 +240,8 @@ app.MapHangfireDashboard("/hangfire", new DashboardOptions
 
 app.Services.GetRequiredService<IRecurringJobManager>().AddOrUpdate<DescartarAnexosVencidosJob>(
     "descartar-anexos-vencidos", job => job.ExecutarAsync(CancellationToken.None), Cron.Daily());
+app.Services.GetRequiredService<IRecurringJobManager>().AddOrUpdate<ExpurgarLeadsInativosJob>(
+    "expurgar-leads-inativos", job => job.ExecutarAsync(CancellationToken.None), Cron.Daily());
 
 app.Run();
 

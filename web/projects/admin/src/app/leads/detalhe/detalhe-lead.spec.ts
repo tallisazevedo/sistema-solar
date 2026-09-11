@@ -75,4 +75,45 @@ describe('DetalheLead', () => {
     http.expectOne('/api/leads/1/status').flush(null);
     http.expectOne('/api/leads/1').flush({ ...lead, status: 1 });
   });
+
+  it('avisa quando o lead foi expurgado', async () => {
+    await TestBed.configureTestingModule({
+      imports: [DetalheLead],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideApiConfiguration(''),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: convertToParamMap({ id: '2' }) } },
+        },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(DetalheLead);
+    fixture.detectChanges();
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/leads/2')
+      .flush({
+        id: '2',
+        nome: '[expurgado]',
+        telefone: '[expurgado]',
+        email: '[expurgado]',
+        canalPreferido: 1,
+        roteadoParaHumano: false,
+        calibracaoPendente: false,
+        possuiAnexo: false,
+        consentimentos: [],
+        resultado: {
+          potenciaInstaladaKwp: 5.5,
+          quantidadeModulos: 10,
+          capex: 20000,
+          economiaMensalAno1: 450,
+        },
+        expurgadoEm: '2026-09-11T10:00:00Z',
+      });
+    fixture.detectChanges();
+    const texto = fixture.nativeElement.textContent;
+    expect(texto).toContain('Lead expurgado em');
+  });
 });

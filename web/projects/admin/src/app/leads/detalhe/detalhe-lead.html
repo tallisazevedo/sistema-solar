@@ -1,6 +1,11 @@
 <a routerLink="/leads">← Voltar aos leads</a>
 @if (lead(); as item) {
   <h1>{{ item.nome }}</h1>
+  @if (item.expurgadoEm) {
+    <p class="aviso">
+      Lead expurgado em {{ item.expurgadoEm | date: 'dd/MM/yyyy' }} — dados pessoais removidos.
+    </p>
+  }
   <section>
     <h2>Contato</h2>
     <p>{{ item.telefone }}</p>

@@ -98,4 +98,4 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
 
 public enum DesfechoCapturaLead { CalibracaoPendente, RoteadoParaHumano, PropostaEmitida }
 public sealed record ConfiguracaoConsentimentos(IReadOnlySet<string> VersoesTextoAceitas);
-public sealed record ConfiguracaoRetencaoLgpd(int PrazoDescarteAnexoDias);
+public sealed record ConfiguracaoRetencaoLgpd(int PrazoDescarteAnexoDias, int PrazoExpurgoLeadMeses);

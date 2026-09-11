@@ -403,7 +403,7 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         var pdf = "%PDF-1.4 conta teste"u8.ToArray();
 
         using var formulario = FormularioLead(true, pdf, "conta.pdf", "application/pdf",
-            sessaoFunilId: sessaoFunilId);
+            sessaoFunilId: sessaoFunilId, consentimentoGuardaAnexo: true);
         var response = await _cliente.PostAsync($"/api/publico/simulacoes/{simulacao!.Id}/lead", formulario);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

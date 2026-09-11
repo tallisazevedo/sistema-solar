@@ -17,13 +17,14 @@ export interface LeadAdmin {
   calibracaoPendente: boolean;
   possuiAnexo: boolean;
   consentimentos: { finalidade: number; versaoTexto: string; concedidoEm: string }[];
-  simulacaoId: string;
+  simulacaoId: string | null;
   resultado: {
     potenciaInstaladaKwp: number;
     quantidadeModulos: number;
     capex: number;
     economiaMensalAno1: number;
   } | null;
+  expurgadoEm: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

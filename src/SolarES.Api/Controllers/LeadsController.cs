@@ -61,5 +61,6 @@ public sealed class LeadsController(ConsultaLeadsAppService servico, GerenciarLe
         lead.Origem, lead.VisitaTecnicaAgendadaPara, lead.CriadoEm,
         lead.RoteadoParaHumano, lead.CalibracaoPendente, lead.PossuiAnexo,
         lead.SimulacaoId, lead.Resultado,
-        lead.Consentimentos.Select(c => new ConsentimentoResponse(c.Finalidade, c.VersaoTexto, c.ConcedidoEm)).ToList());
+        lead.Consentimentos.Select(c => new ConsentimentoResponse(c.Finalidade, c.VersaoTexto, c.ConcedidoEm)).ToList(),
+        lead.ExpurgadoEm);
 }

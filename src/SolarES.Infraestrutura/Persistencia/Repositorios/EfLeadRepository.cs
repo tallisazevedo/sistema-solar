@@ -23,6 +23,9 @@ public sealed class EfLeadRepository(SolarESDbContext contexto) : ILeadRepositor
         DateTimeOffset desde, CancellationToken ct) =>
         contexto.Leads.CountAsync(l => l.CriadoEm >= desde
             && (string.Equals(l.Email, emailNormalizado, StringComparison.OrdinalIgnoreCase) || l.Telefone == telefoneNormalizado), ct);
+    public async Task<IReadOnlyList<LeadEntidade>> ListarParaExpurgoAsync(DateTimeOffset criadoAntesDe, CancellationToken ct) =>
+        await contexto.Leads.Where(l => l.ExpurgadoEm == null && l.Status != StatusLead.Convertido
+            && l.CriadoEm <= criadoAntesDe).ToListAsync(ct);
     public Task<AnexoConta?> ObterAnexoAsync(Guid leadId, CancellationToken ct) =>
         contexto.AnexosConta.SingleOrDefaultAsync(a => a.LeadId == leadId, ct);
     public async Task<IReadOnlyList<AnexoConta>> ListarAnexosParaDescarteAsync(DateTimeOffset ate, CancellationToken ct) =>

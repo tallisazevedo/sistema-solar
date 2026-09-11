@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SolarES.Infraestrutura.Persistencia;
@@ -11,9 +12,11 @@ using SolarES.Infraestrutura.Persistencia;
 namespace SolarES.Infraestrutura.Migrations
 {
     [DbContext(typeof(SolarESDbContext))]
-    partial class SolarESDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260911233814_T24LeadExpurgo")]
+    partial class T24LeadExpurgo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -388,49 +391,6 @@ namespace SolarES.Infraestrutura.Migrations
                     b.ToTable("ConsentimentosLgpd");
                 });
 
-            modelBuilder.Entity("SolarES.Dominio.Lead.HistoricoStatusLead", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("AlteradoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("LeadId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("StatusAnterior")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<string>("StatusNovo")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UsuarioId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.HasIndex("LeadId", "AlteradoEm");
-
-                    b.ToTable("HistoricosStatusLead");
-                });
-
             modelBuilder.Entity("SolarES.Dominio.Lead.Lead", b =>
                 {
                     b.Property<Guid>("Id")
@@ -458,7 +418,7 @@ namespace SolarES.Infraestrutura.Migrations
                     b.Property<DateTimeOffset?>("ExpurgadoEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("MunicipioId")
+                    b.Property<Guid>("MunicipioId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Nome")
@@ -487,9 +447,6 @@ namespace SolarES.Infraestrutura.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset?>("VisitaTecnicaAgendadaPara")
-                        .HasColumnType("timestamp with time zone");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CriadoEm")
@@ -501,42 +458,6 @@ namespace SolarES.Infraestrutura.Migrations
                     b.HasIndex("Status");
 
                     b.ToTable("Leads");
-                });
-
-            modelBuilder.Entity("SolarES.Dominio.Metricas.EventoFunil", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset>("OcorridoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("SessaoFunilId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("SimulacaoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Tipo")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Tipo", "OcorridoEm");
-
-                    b.ToTable("EventosFunil");
                 });
 
             modelBuilder.Entity("SolarES.Dominio.Precificacao.FaixaPreco", b =>
@@ -582,66 +503,11 @@ namespace SolarES.Infraestrutura.Migrations
                     b.ToTable("FaixasPreco");
                 });
 
-            modelBuilder.Entity("SolarES.Dominio.Proposta.EnvioProposta", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Canal")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Destino")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
-
-                    b.Property<DateTimeOffset?>("EntregueEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("EnviadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("IdMensagemProvedor")
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
-
-                    b.Property<Guid>("PropostaId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Tentativas")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UltimoErro")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PropostaId");
-
-                    b.ToTable("EnviosProposta");
-                });
-
             modelBuilder.Entity("SolarES.Dominio.Proposta.Proposta", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("AceitaEm")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ArquivoPdfUrl")
                         .HasMaxLength(1000)
@@ -662,19 +528,10 @@ namespace SolarES.Infraestrutura.Migrations
                     b.Property<DateTimeOffset?>("EnviadaEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("MotivoPerda")
-                        .HasColumnType("text");
-
                     b.Property<string>("Numero")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
-
-                    b.Property<DateTimeOffset?>("PerdidaEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ResponsavelUsuarioId")
-                        .HasColumnType("uuid");
 
                     b.Property<Guid>("SimulacaoId")
                         .HasColumnType("uuid");
@@ -688,18 +545,10 @@ namespace SolarES.Infraestrutura.Migrations
                     b.Property<DateTimeOffset>("ValidaAte")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTimeOffset?>("VencidaEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("VencimentoNotificadoEm")
-                        .HasColumnType("timestamp with time zone");
-
                     b.HasKey("Id");
 
                     b.HasIndex("Numero")
                         .IsUnique();
-
-                    b.HasIndex("ResponsavelUsuarioId");
 
                     b.HasIndex("ValidaAte");
 
@@ -959,38 +808,6 @@ namespace SolarES.Infraestrutura.Migrations
                         .HasForeignKey("LeadId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("SolarES.Dominio.Lead.HistoricoStatusLead", b =>
-                {
-                    b.HasOne("SolarES.Dominio.Lead.Lead", null)
-                        .WithMany()
-                        .HasForeignKey("LeadId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SolarES.Dominio.Identidade.Usuario", null)
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("SolarES.Dominio.Proposta.EnvioProposta", b =>
-                {
-                    b.HasOne("SolarES.Dominio.Proposta.Proposta", null)
-                        .WithMany()
-                        .HasForeignKey("PropostaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("SolarES.Dominio.Proposta.Proposta", b =>
-                {
-                    b.HasOne("SolarES.Dominio.Identidade.Usuario", null)
-                        .WithMany()
-                        .HasForeignKey("ResponsavelUsuarioId")
-                        .OnDelete(DeleteBehavior.Restrict);
                 });
 #pragma warning restore 612, 618
         }
