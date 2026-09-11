@@ -259,6 +259,57 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         await banco.SaveChangesAsync();
     }
 
+    [Fact]
+    public async Task Dado_PdfValido_Quando_AnexaConta_Entao_PersisteEBaixaSomenteAutenticado()
+    {
+        const string codigoIbge = "1212121";
+        await PrepararCenarioAsync(codigoIbge);
+        _cliente.DefaultRequestHeaders.Authorization = null;
+        var criar = await _cliente.PostAsJsonAsync("/api/publico/simulacoes",
+            new CriarSimulacaoPublicaRequest(500m, null, TipoLigacao.Monofasica,
+                PerfilImovel.Residencial, codigoIbge, TipoTelhado.Ceramico, 1000m, false));
+        var simulacao = await criar.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>();
+        var pdf = "%PDF-1.4 conta teste"u8.ToArray();
+
+        using var formulario = FormularioLead(true, pdf, "conta.pdf", "application/pdf");
+        Assert.Equal(HttpStatusCode.OK,
+            (await _cliente.PostAsync($"/api/publico/simulacoes/{simulacao!.Id}/lead", formulario)).StatusCode);
+        using var escopo = _factory.Services.CreateScope();
+        var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        var lead = await contexto.Leads.SingleAsync(l => l.SimulacaoId == simulacao.Id);
+        var anexo = await contexto.AnexosConta.SingleAsync(a => a.LeadId == lead.Id);
+        Assert.Equal(TipoAnexoConta.Pdf, anexo.Tipo);
+        Assert.Equal(pdf.Length, anexo.Tamanho);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _cliente.GetAsync($"/api/leads/{lead.Id}/anexo")).StatusCode);
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.VendedorEmail, SolarESApiFactory.VendedorSenha);
+        var detalhe = await _cliente.GetFromJsonAsync<LeadResponse>($"/api/leads/{lead.Id}");
+        Assert.True(detalhe!.PossuiAnexo);
+        var download = await _cliente.GetAsync($"/api/leads/{lead.Id}/anexo");
+        Assert.Equal(HttpStatusCode.OK, download.StatusCode);
+        Assert.Equal(pdf, await download.Content.ReadAsByteArrayAsync());
+    }
+
+    [Fact]
+    public async Task Dado_ExecutavelRenomeado_Quando_AnexaComoPdf_Entao_RecusaSemCriarLead()
+    {
+        const string codigoIbge = "1313131";
+        await PrepararCenarioAsync(codigoIbge);
+        _cliente.DefaultRequestHeaders.Authorization = null;
+        var criar = await _cliente.PostAsJsonAsync("/api/publico/simulacoes",
+            new CriarSimulacaoPublicaRequest(500m, null, TipoLigacao.Monofasica,
+                PerfilImovel.Residencial, codigoIbge, TipoTelhado.Ceramico, 1000m, false));
+        var simulacao = await criar.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>();
+
+        using var formulario = FormularioLead(true, "MZ executavel"u8.ToArray(), "conta.pdf", "application/pdf");
+        var response = await _cliente.PostAsync($"/api/publico/simulacoes/{simulacao!.Id}/lead", formulario);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var escopo = _factory.Services.CreateScope();
+        var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        Assert.DoesNotContain(await contexto.Leads.ToListAsync(), lead => lead.SimulacaoId == simulacao.Id);
+    }
+
     private static ConfiguracaoCalculo ConfiguracaoConfirmada()
     {
         var b = ConfiguracaoCalculoBaseline.Criar();
@@ -278,7 +329,8 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
             new(b.TextosProposta.Valor, OrigemPremissa.FontePublica));
     }
 
-    private static MultipartFormDataContent FormularioLead(bool consentimento)
+    private static MultipartFormDataContent FormularioLead(bool consentimento, byte[]? anexo = null,
+        string nomeArquivo = "conta.pdf", string tipoConteudo = "application/pdf")
     {
         var formulario = new MultipartFormDataContent();
         formulario.Add(new StringContent("Maria Silva"), "Nome");
@@ -286,6 +338,12 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         formulario.Add(new StringContent("maria@exemplo.com"), "Email");
         formulario.Add(new StringContent(nameof(CanalPreferido.Email)), "CanalPreferido");
         formulario.Add(new StringContent(consentimento.ToString()), "Consentimento");
+        if (anexo is not null)
+        {
+            var arquivo = new ByteArrayContent(anexo);
+            arquivo.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(tipoConteudo);
+            formulario.Add(arquivo, "Anexo", nomeArquivo);
+        }
         return formulario;
     }
 

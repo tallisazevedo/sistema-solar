@@ -26,8 +26,15 @@ public sealed class SimulacoesPublicasController(
     {
         try
         {
+            byte[]? conteudoAnexo = null;
+            if (request.Anexo is not null)
+            {
+                await using var memoria = new MemoryStream();
+                await request.Anexo.CopyToAsync(memoria, ct);
+                conteudoAnexo = memoria.ToArray();
+            }
             var desfecho = await leadAppService.CapturarPublicoAsync(id, request.Nome, request.Telefone,
-                request.Email, request.CanalPreferido, request.Consentimento, ct);
+                request.Email, request.CanalPreferido, request.Consentimento, conteudoAnexo, ct);
             return Ok(new CapturarLeadPublicoResponse(desfecho.ToString()));
         }
         catch (KeyNotFoundException) { return NotFound(); }

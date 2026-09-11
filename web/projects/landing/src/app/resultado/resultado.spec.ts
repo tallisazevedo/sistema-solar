@@ -51,6 +51,7 @@ describe('Resultado', () => {
     expect(texto).toContain('80%');
     expect(texto).toContain('kit litoral');
     expect(texto).toContain('Projeção anual');
+    expect(fixture.nativeElement.querySelector('input[type="file"]')?.required).toBe(false);
   });
 
   it('oculta numeros quando a simulacao exige avaliacao humana', async () => {

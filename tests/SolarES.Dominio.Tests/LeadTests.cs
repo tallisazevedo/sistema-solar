@@ -24,4 +24,11 @@ public sealed class LeadTests
         Assert.Equal(OrigemLead.Landing, lead.Origem);
         Assert.NotNull(lead.ConsentimentoLgpdEm);
     }
+
+    [Fact]
+    public void Dado_ArquivoVazio_Quando_CriaAnexo_Entao_RecusaCriacao()
+    {
+        Assert.Throws<ArgumentException>(() => AnexoConta.Criar(
+            Guid.NewGuid(), TipoAnexoConta.Pdf, 0, "conta.pdf", DateTimeOffset.UtcNow));
+    }
 }

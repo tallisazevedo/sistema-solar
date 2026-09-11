@@ -22,4 +22,16 @@ export class DetalheLead implements OnInit {
   protected canal(valor: number | null): string {
     return valor === 1 ? 'WhatsApp' : 'E-mail';
   }
+  protected baixarAnexo(): void {
+    const lead = this.lead();
+    if (!lead) return;
+    this.servico.baixarAnexo(lead.id).subscribe((arquivo) => {
+      const url = URL.createObjectURL(arquivo);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'conta';
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+  }
 }

@@ -14,6 +14,9 @@ public sealed class EfLeadRepository(SolarESDbContext contexto) : ILeadRepositor
             .OrderByDescending(l => l.CriadoEm).ToListAsync(ct);
     public Task<LeadEntidade?> ObterPorIdAsync(Guid id, CancellationToken ct) =>
         contexto.Leads.SingleOrDefaultAsync(l => l.Id == id && l.Origem == OrigemLead.Landing, ct);
+    public Task<AnexoConta?> ObterAnexoAsync(Guid leadId, CancellationToken ct) =>
+        contexto.AnexosConta.SingleOrDefaultAsync(a => a.LeadId == leadId, ct);
+    public void AdicionarAnexo(AnexoConta anexo) => contexto.AnexosConta.Add(anexo);
     public void Adicionar(LeadEntidade lead) => contexto.Leads.Add(lead);
     public Task SalvarAlteracoesAsync(CancellationToken ct) => contexto.SaveChangesAsync(ct);
 }

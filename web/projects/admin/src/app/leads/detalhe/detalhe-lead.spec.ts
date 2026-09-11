@@ -32,6 +32,7 @@ describe('DetalheLead', () => {
         canalPreferido: 1,
         roteadoParaHumano: false,
         calibracaoPendente: false,
+        possuiAnexo: true,
         resultado: {
           potenciaInstaladaKwp: 5.5,
           quantidadeModulos: 10,
@@ -44,5 +45,6 @@ describe('DetalheLead', () => {
     expect(texto).toContain('maria@exemplo.com');
     expect(texto).toContain('WhatsApp');
     expect(texto).toContain('5.50 kWp');
+    expect(texto).toContain('Baixar conta anexada');
   });
 });

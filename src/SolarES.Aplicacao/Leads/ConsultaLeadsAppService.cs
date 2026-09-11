@@ -8,7 +8,7 @@ using SolarES.Dominio.Simulacao;
 namespace SolarES.Aplicacao.Leads;
 
 public sealed class ConsultaLeadsAppService(ILeadRepository leads, ISimulacaoRepository simulacoes,
-    IConfiguracaoVersaoRepository configuracoes)
+    IConfiguracaoVersaoRepository configuracoes, IArmazenamentoAnexoConta armazenamentoAnexos)
 {
     public async Task<IReadOnlyList<LeadAdministrativoResultado>> ListarAsync(CancellationToken ct)
     {
@@ -28,6 +28,15 @@ public sealed class ConsultaLeadsAppService(ILeadRepository leads, ISimulacaoRep
         return lead is null ? null : await MontarAsync(lead, ct);
     }
 
+    public async Task<AnexoContaDownload?> ObterAnexoAsync(Guid leadId, CancellationToken ct)
+    {
+        if (await leads.ObterPorIdAsync(leadId, ct) is null) return null;
+        var anexo = await leads.ObterAnexoAsync(leadId, ct);
+        if (anexo is null) return null;
+        var conteudo = await armazenamentoAnexos.LerAsync(anexo.CaminhoArmazenamento, ct);
+        return conteudo is null ? null : new(conteudo, anexo.Tipo);
+    }
+
     private async Task<LeadAdministrativoResultado?> MontarAsync(Lead lead, CancellationToken ct)
     {
         if (lead.SimulacaoId is not { } simulacaoId) return null;
@@ -37,12 +46,15 @@ public sealed class ConsultaLeadsAppService(ILeadRepository leads, ISimulacaoRep
             ?? throw new InvalidOperationException("Versão da configuração não encontrada.");
         var resultado = JsonSerializer.Deserialize<ResultadoSimulacao>(simulacao.ResultadoSnapshot)
             ?? throw new InvalidOperationException("Resultado da simulação inválido.");
+        var possuiAnexo = await leads.ObterAnexoAsync(lead.Id, ct) is not null;
         return new(lead.Id, lead.Nome, lead.Telefone, lead.Email, lead.CanalPreferido,
             lead.Status, lead.CriadoEm, simulacao.RoteadaParaHumano,
-            versao.Payload.PossuiPremissaProvisoria(), simulacao.Id, resultado);
+            versao.Payload.PossuiPremissaProvisoria(), possuiAnexo, simulacao.Id, resultado);
     }
 }
 
 public sealed record LeadAdministrativoResultado(Guid Id, string Nome, string Telefone, string Email,
     CanalPreferido? CanalPreferido, StatusLead Status, DateTimeOffset CriadoEm,
-    bool RoteadoParaHumano, bool CalibracaoPendente, Guid SimulacaoId, ResultadoSimulacao Resultado);
+    bool RoteadoParaHumano, bool CalibracaoPendente, bool PossuiAnexo,
+    Guid SimulacaoId, ResultadoSimulacao Resultado);
+public sealed record AnexoContaDownload(byte[] Conteudo, TipoAnexoConta Tipo);

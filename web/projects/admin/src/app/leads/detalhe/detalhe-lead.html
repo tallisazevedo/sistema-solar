@@ -14,6 +14,9 @@
     <p>Investimento: {{ item.resultado.capex | currency: 'BRL' }}</p>
     <p>Economia mensal: {{ item.resultado.economiaMensalAno1 | currency: 'BRL' }}</p>
   </section>
+  @if (item.possuiAnexo) {
+    <button type="button" (click)="baixarAnexo()">Baixar conta anexada</button>
+  }
   @if (item.roteadoParaHumano) {
     <p class="aviso">Avaliação de engenharia necessária.</p>
   }

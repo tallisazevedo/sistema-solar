@@ -13,6 +13,7 @@ using SolarES.Aplicacao.Propostas;
 using SolarES.Aplicacao.Simulacoes;
 using SolarES.Aplicacao.Leads;
 using SolarES.Infraestrutura.Identidade;
+using SolarES.Infraestrutura.Anexos;
 using SolarES.Infraestrutura.Pdf;
 using SolarES.Infraestrutura.Persistencia;
 using SolarES.Infraestrutura.Persistencia.Repositorios;
@@ -52,6 +53,7 @@ builder.Services.AddScoped<SimulacaoAppService>();
 builder.Services.AddScoped<ILeadRepository, EfLeadRepository>();
 builder.Services.AddScoped<LeadAppService>();
 builder.Services.AddScoped<ConsultaLeadsAppService>();
+builder.Services.AddScoped<IArmazenamentoAnexoConta, ArmazenamentoAnexoContaEmDisco>();
 
 builder.Services.AddScoped<IPropostaRepository, EfPropostaRepository>();
 builder.Services.AddScoped<IGeradorPdfProposta, GeradorPdfProposta>();

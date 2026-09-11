@@ -13,6 +13,7 @@ export interface LeadAdmin {
   criadoEm: string;
   roteadoParaHumano: boolean;
   calibracaoPendente: boolean;
+  possuiAnexo: boolean;
   simulacaoId: string;
   resultado: {
     potenciaInstaladaKwp: number;
@@ -31,5 +32,8 @@ export class LeadsService {
   }
   obter(id: string): Observable<LeadAdmin> {
     return this.http.get<LeadAdmin>(`${this.api.rootUrl}/api/leads/${id}`);
+  }
+  baixarAnexo(id: string): Observable<Blob> {
+    return this.http.get(`${this.api.rootUrl}/api/leads/${id}/anexo`, { responseType: 'blob' });
   }
 }

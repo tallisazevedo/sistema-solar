@@ -5,4 +5,5 @@ namespace SolarES.Api.Contratos;
 
 public sealed record LeadResponse(Guid Id, string Nome, string Telefone, string Email,
     CanalPreferido? CanalPreferido, StatusLead Status, DateTimeOffset CriadoEm,
-    bool RoteadoParaHumano, bool CalibracaoPendente, Guid SimulacaoId, ResultadoSimulacao Resultado);
+    bool RoteadoParaHumano, bool CalibracaoPendente, bool PossuiAnexo,
+    Guid SimulacaoId, ResultadoSimulacao Resultado);
