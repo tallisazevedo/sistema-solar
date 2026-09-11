@@ -14,6 +14,7 @@ export interface LeadAdmin {
   roteadoParaHumano: boolean;
   calibracaoPendente: boolean;
   possuiAnexo: boolean;
+  consentimentos: { finalidade: number; versaoTexto: string; concedidoEm: string }[];
   simulacaoId: string;
   resultado: {
     potenciaInstaladaKwp: number;

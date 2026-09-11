@@ -169,6 +169,11 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         using var escopo = _factory.Services.CreateScope();
         var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
         Assert.Contains(await contexto.Leads.ToListAsync(), lead => lead.SimulacaoId == simulacao.Id);
+        var leadCriado = await contexto.Leads.SingleAsync(lead => lead.SimulacaoId == simulacao.Id);
+        var consentimento = await contexto.ConsentimentosLgpd.SingleAsync(c => c.LeadId == leadCriado.Id);
+        Assert.Equal(FinalidadeConsentimento.ContatoComercial, consentimento.Finalidade);
+        Assert.Equal("contato-comercial-v1", consentimento.VersaoTexto);
+        Assert.Equal(leadCriado.ConsentimentoLgpdEm, consentimento.ConcedidoEm);
         Assert.DoesNotContain(await contexto.Propostas.ToListAsync(), proposta => proposta.SimulacaoId == simulacao.Id);
     }
 
@@ -184,6 +189,26 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         var simulacao = await criar.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>();
 
         using var formulario = FormularioLead(consentimento: false);
+        var response = await _cliente.PostAsync($"/api/publico/simulacoes/{simulacao!.Id}/lead", formulario);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var escopo = _factory.Services.CreateScope();
+        var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        Assert.DoesNotContain(await contexto.Leads.ToListAsync(), lead => lead.SimulacaoId == simulacao.Id);
+    }
+
+    [Fact]
+    public async Task Dada_VersaoDesconhecida_Quando_CapturaLead_Entao_RecusaSemPersistir()
+    {
+        const string codigoIbge = "1414141";
+        await PrepararCenarioAsync(codigoIbge);
+        _cliente.DefaultRequestHeaders.Authorization = null;
+        var criar = await _cliente.PostAsJsonAsync("/api/publico/simulacoes",
+            new CriarSimulacaoPublicaRequest(500m, null, TipoLigacao.Monofasica,
+                PerfilImovel.Residencial, codigoIbge, TipoTelhado.Ceramico, 1000m, false));
+        var simulacao = await criar.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>();
+
+        using var formulario = FormularioLead(true, versaoTexto: "versao-inventada");
         var response = await _cliente.PostAsync($"/api/publico/simulacoes/{simulacao!.Id}/lead", formulario);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -285,6 +310,9 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.VendedorEmail, SolarESApiFactory.VendedorSenha);
         var detalhe = await _cliente.GetFromJsonAsync<LeadResponse>($"/api/leads/{lead.Id}");
         Assert.True(detalhe!.PossuiAnexo);
+        Assert.Contains(detalhe.Consentimentos, c =>
+            c.Finalidade == FinalidadeConsentimento.ContatoComercial
+            && c.VersaoTexto == "contato-comercial-v1");
         var download = await _cliente.GetAsync($"/api/leads/{lead.Id}/anexo");
         Assert.Equal(HttpStatusCode.OK, download.StatusCode);
         Assert.Equal(pdf, await download.Content.ReadAsByteArrayAsync());
@@ -330,14 +358,17 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
     }
 
     private static MultipartFormDataContent FormularioLead(bool consentimento, byte[]? anexo = null,
-        string nomeArquivo = "conta.pdf", string tipoConteudo = "application/pdf")
+        string nomeArquivo = "conta.pdf", string tipoConteudo = "application/pdf",
+        string versaoTexto = "contato-comercial-v1")
     {
         var formulario = new MultipartFormDataContent();
         formulario.Add(new StringContent("Maria Silva"), "Nome");
         formulario.Add(new StringContent("27999999999"), "Telefone");
         formulario.Add(new StringContent("maria@exemplo.com"), "Email");
         formulario.Add(new StringContent(nameof(CanalPreferido.Email)), "CanalPreferido");
-        formulario.Add(new StringContent(consentimento.ToString()), "Consentimento");
+        if (consentimento)
+            formulario.Add(new StringContent(nameof(FinalidadeConsentimento.ContatoComercial)), "FinalidadesAceitas");
+        formulario.Add(new StringContent(versaoTexto), "VersaoTexto");
         if (anexo is not null)
         {
             var arquivo = new ByteArrayContent(anexo);

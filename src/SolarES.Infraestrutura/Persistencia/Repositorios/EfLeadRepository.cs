@@ -17,6 +17,9 @@ public sealed class EfLeadRepository(SolarESDbContext contexto) : ILeadRepositor
     public Task<AnexoConta?> ObterAnexoAsync(Guid leadId, CancellationToken ct) =>
         contexto.AnexosConta.SingleOrDefaultAsync(a => a.LeadId == leadId, ct);
     public void AdicionarAnexo(AnexoConta anexo) => contexto.AnexosConta.Add(anexo);
+    public async Task<IReadOnlyList<ConsentimentoLgpd>> ListarConsentimentosAsync(Guid leadId, CancellationToken ct) =>
+        await contexto.ConsentimentosLgpd.Where(c => c.LeadId == leadId).OrderBy(c => c.ConcedidoEm).ToListAsync(ct);
+    public void AdicionarConsentimento(ConsentimentoLgpd consentimento) => contexto.ConsentimentosLgpd.Add(consentimento);
     public void Adicionar(LeadEntidade lead) => contexto.Leads.Add(lead);
     public Task SalvarAlteracoesAsync(CancellationToken ct) => contexto.SaveChangesAsync(ct);
 }

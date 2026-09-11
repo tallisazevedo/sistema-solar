@@ -47,14 +47,20 @@ public sealed class ConsultaLeadsAppService(ILeadRepository leads, ISimulacaoRep
         var resultado = JsonSerializer.Deserialize<ResultadoSimulacao>(simulacao.ResultadoSnapshot)
             ?? throw new InvalidOperationException("Resultado da simulação inválido.");
         var possuiAnexo = await leads.ObterAnexoAsync(lead.Id, ct) is not null;
+        var consentimentos = await leads.ListarConsentimentosAsync(lead.Id, ct);
         return new(lead.Id, lead.Nome, lead.Telefone, lead.Email, lead.CanalPreferido,
             lead.Status, lead.CriadoEm, simulacao.RoteadaParaHumano,
-            versao.Payload.PossuiPremissaProvisoria(), possuiAnexo, simulacao.Id, resultado);
+            versao.Payload.PossuiPremissaProvisoria(), possuiAnexo, simulacao.Id, resultado,
+            consentimentos.Select(c => new ConsentimentoAdministrativoResultado(
+                c.Finalidade, c.VersaoTexto, c.ConcedidoEm)).ToList());
     }
 }
 
 public sealed record LeadAdministrativoResultado(Guid Id, string Nome, string Telefone, string Email,
     CanalPreferido? CanalPreferido, StatusLead Status, DateTimeOffset CriadoEm,
     bool RoteadoParaHumano, bool CalibracaoPendente, bool PossuiAnexo,
-    Guid SimulacaoId, ResultadoSimulacao Resultado);
+    Guid SimulacaoId, ResultadoSimulacao Resultado,
+    IReadOnlyList<ConsentimentoAdministrativoResultado> Consentimentos);
+public sealed record ConsentimentoAdministrativoResultado(FinalidadeConsentimento Finalidade,
+    string VersaoTexto, DateTimeOffset ConcedidoEm);
 public sealed record AnexoContaDownload(byte[] Conteudo, TipoAnexoConta Tipo);

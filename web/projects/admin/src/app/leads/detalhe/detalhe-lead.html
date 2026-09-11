@@ -17,6 +17,17 @@
   @if (item.possuiAnexo) {
     <button type="button" (click)="baixarAnexo()">Baixar conta anexada</button>
   }
+  <section>
+    <h2>Consentimentos</h2>
+    @for (consentimento of item.consentimentos; track consentimento.finalidade) {
+      <p>
+        Contato comercial — versão {{ consentimento.versaoTexto }} —
+        {{ consentimento.concedidoEm | date: 'dd/MM/yyyy HH:mm' }}
+      </p>
+    } @empty {
+      <p>Nenhum consentimento registrado.</p>
+    }
+  </section>
   @if (item.roteadoParaHumano) {
     <p class="aviso">Avaliação de engenharia necessária.</p>
   }

@@ -52,6 +52,8 @@ builder.Services.AddScoped<ISimulacaoRepository, EfSimulacaoRepository>();
 builder.Services.AddScoped<SimulacaoAppService>();
 builder.Services.AddScoped<ILeadRepository, EfLeadRepository>();
 builder.Services.AddScoped<LeadAppService>();
+builder.Services.AddSingleton(new ConfiguracaoConsentimentos(
+    (builder.Configuration.GetSection("Lgpd:VersoesTextoAceitas").Get<string[]>() ?? []).ToHashSet()));
 builder.Services.AddScoped<ConsultaLeadsAppService>();
 builder.Services.AddScoped<IArmazenamentoAnexoConta, ArmazenamentoAnexoContaEmDisco>();
 

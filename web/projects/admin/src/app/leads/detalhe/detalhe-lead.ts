@@ -1,11 +1,11 @@
-import { CurrencyPipe, DecimalPipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LeadAdmin, LeadsService } from '../leads.service';
 
 @Component({
   selector: 'app-detalhe-lead',
-  imports: [CurrencyPipe, DecimalPipe, RouterLink],
+  imports: [CurrencyPipe, DatePipe, DecimalPipe, RouterLink],
   templateUrl: './detalhe-lead.html',
   styleUrl: './detalhe-lead.css',
 })

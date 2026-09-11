@@ -15,9 +15,11 @@ public sealed class Lead : EntidadeBase
     public StatusLead Status { get; private set; }
 
     public static Lead Criar(string nome, string telefone, string email, CanalPreferido canalPreferido,
-        Guid simulacaoId, Guid municipioId, bool consentimento, DateTimeOffset momento)
+        Guid simulacaoId, Guid municipioId, IReadOnlyCollection<FinalidadeConsentimento> finalidades,
+        DateTimeOffset momento)
     {
-        if (!consentimento) throw new ArgumentException("O consentimento para contato é obrigatório.");
+        if (!finalidades.Contains(FinalidadeConsentimento.ContatoComercial))
+            throw new ArgumentException("O consentimento para contato comercial é obrigatório.");
         if (string.IsNullOrWhiteSpace(nome)) throw new ArgumentException("Informe seu nome.");
         if (string.IsNullOrWhiteSpace(telefone)) throw new ArgumentException("Informe seu telefone.");
         if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Informe seu e-mail.");

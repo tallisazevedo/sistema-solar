@@ -52,6 +52,11 @@ describe('Resultado', () => {
     expect(texto).toContain('kit litoral');
     expect(texto).toContain('Projeção anual');
     expect(fixture.nativeElement.querySelector('input[type="file"]')?.required).toBe(false);
+    expect(
+      (fixture.nativeElement.querySelector('[name="FinalidadesAceitas"]') as HTMLInputElement)
+        .checked,
+    ).toBe(false);
+    expect(texto).toContain('política de privacidade');
   });
 
   it('oculta numeros quando a simulacao exige avaliacao humana', async () => {
@@ -156,7 +161,7 @@ describe('Resultado', () => {
     pagina.querySelector<HTMLInputElement>('[name="Nome"]')!.value = 'Maria';
     pagina.querySelector<HTMLInputElement>('[name="Telefone"]')!.value = '27999999999';
     pagina.querySelector<HTMLInputElement>('[name="Email"]')!.value = 'maria@exemplo.com';
-    pagina.querySelector<HTMLInputElement>('[name="Consentimento"]')!.checked = true;
+    pagina.querySelector<HTMLInputElement>('[name="FinalidadesAceitas"]')!.checked = true;
     pagina.querySelector('form')!.dispatchEvent(new Event('submit'));
     await new Promise((resolve) => setTimeout(resolve, 0));
     fixture.detectChanges();

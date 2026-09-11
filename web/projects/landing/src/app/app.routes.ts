@@ -14,6 +14,10 @@ export const routes: Routes = [
     loadComponent: () => import('./resultado/resultado'),
   },
   {
+    path: 'privacidade',
+    loadComponent: () => import('./privacidade/privacidade'),
+  },
+  {
     path: '**',
     loadComponent: () => import('./nao-encontrada/nao-encontrada'),
   },

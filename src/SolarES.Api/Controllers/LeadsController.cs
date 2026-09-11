@@ -37,5 +37,6 @@ public sealed class LeadsController(ConsultaLeadsAppService servico) : Controlle
     private static LeadResponse ParaResponse(LeadAdministrativoResultado lead) => new(
         lead.Id, lead.Nome, lead.Telefone, lead.Email, lead.CanalPreferido, lead.Status,
         lead.CriadoEm, lead.RoteadoParaHumano, lead.CalibracaoPendente, lead.PossuiAnexo,
-        lead.SimulacaoId, lead.Resultado);
+        lead.SimulacaoId, lead.Resultado,
+        lead.Consentimentos.Select(c => new ConsentimentoResponse(c.Finalidade, c.VersaoTexto, c.ConcedidoEm)).ToList());
 }

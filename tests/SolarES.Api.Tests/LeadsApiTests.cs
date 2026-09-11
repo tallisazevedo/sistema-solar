@@ -50,7 +50,7 @@ public sealed class LeadsApiTests : IClassFixture<SolarESApiFactory>
         if (versao is null) { versao = ConfiguracaoVersao.CriarRascunho(1, ConfiguracaoCalculoBaseline.Criar()); versao.Publicar(Guid.NewGuid(), DateTimeOffset.UtcNow); banco.Add(versao); }
         var resultado = new ResultadoSimulacao(4.4m, 8, 20m, 100m, 15000m, 400m, 40, 50, .2m, 10000m, true, "Engenharia", false, true, []);
         var simulacao = new Simulacao { Id = Guid.NewGuid(), ConfiguracaoVersaoId = versao.Id, Origem = OrigemSimulacao.Landing, EntradasSnapshot = "{}", ResultadoSnapshot = JsonSerializer.Serialize(resultado), PotenciaKwp = 4.4m, QuantidadeModulos = 8, Capex = 15000m, EconomiaMensalAno1 = 400m, CoberturaPercentual = 100m, RoteadaParaHumano = true, CriadoEm = DateTimeOffset.UtcNow, AtualizadoEm = DateTimeOffset.UtcNow };
-        var lead = LeadEntidade.Criar("Lead recente", "27999999999", "lead@teste.com", CanalPreferido.Whatsapp, simulacao.Id, Guid.NewGuid(), true, DateTimeOffset.UtcNow.AddMinutes(1));
+        var lead = LeadEntidade.Criar("Lead recente", "27999999999", "lead@teste.com", CanalPreferido.Whatsapp, simulacao.Id, Guid.NewGuid(), [FinalidadeConsentimento.ContatoComercial], DateTimeOffset.UtcNow.AddMinutes(1));
         simulacao.LeadId = lead.Id;
         banco.AddRange(simulacao, lead);
         await banco.SaveChangesAsync();

@@ -6,6 +6,7 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Prerender,
   },
   { path: 'simular', renderMode: RenderMode.Client },
+  { path: 'privacidade', renderMode: RenderMode.Prerender },
   { path: 'resultado/:id', renderMode: RenderMode.Client },
   { path: '**', renderMode: RenderMode.Prerender },
 ];

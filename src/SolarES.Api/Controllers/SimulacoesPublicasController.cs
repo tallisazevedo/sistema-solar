@@ -34,7 +34,8 @@ public sealed class SimulacoesPublicasController(
                 conteudoAnexo = memoria.ToArray();
             }
             var desfecho = await leadAppService.CapturarPublicoAsync(id, request.Nome, request.Telefone,
-                request.Email, request.CanalPreferido, request.Consentimento, conteudoAnexo, ct);
+                request.Email, request.CanalPreferido, request.FinalidadesAceitas,
+                request.VersaoTexto, conteudoAnexo, ct);
             return Ok(new CapturarLeadPublicoResponse(desfecho.ToString()));
         }
         catch (KeyNotFoundException) { return NotFound(); }

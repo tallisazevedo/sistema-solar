@@ -10,12 +10,16 @@ namespace SolarES.Aplicacao.Leads;
 
 public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository simulacoes,
     IConfiguracaoVersaoRepository configuracoes, PropostaAppService propostas,
-    IArmazenamentoAnexoConta armazenamentoAnexos, TimeProvider relogio)
+    IArmazenamentoAnexoConta armazenamentoAnexos, ConfiguracaoConsentimentos configuracaoConsentimentos,
+    TimeProvider relogio)
 {
     public async Task<DesfechoCapturaLead> CapturarPublicoAsync(Guid simulacaoId, string nome,
-        string telefone, string email, CanalPreferido canal, bool consentimento,
+        string telefone, string email, CanalPreferido canal,
+        IReadOnlyCollection<FinalidadeConsentimento> finalidadesAceitas, string versaoTexto,
         byte[]? conteudoAnexo, CancellationToken ct)
     {
+        if (!configuracaoConsentimentos.VersoesTextoAceitas.Contains(versaoTexto))
+            throw new ArgumentException("Versão do texto de consentimento desconhecida.");
         TipoAnexoConta? tipoAnexo = conteudoAnexo is null ? null : IdentificarTipoAnexo(conteudoAnexo);
         var simulacao = await simulacoes.ObterPorIdAsync(simulacaoId, ct);
         if (simulacao is null || simulacao.Origem != OrigemSimulacao.Landing)
@@ -24,9 +28,12 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
             ?? throw new InvalidOperationException("Entradas da simulação inválidas.");
         var municipioId = await leads.ObterMunicipioIdPorCodigoAsync(entrada.MunicipioCodigoIbge, ct)
             ?? throw new InvalidOperationException("Município da simulação não encontrado.");
+        var agora = relogio.GetUtcNow();
         var lead = Lead.Criar(nome, telefone, email, canal, simulacao.Id, municipioId,
-            consentimento, relogio.GetUtcNow());
+            finalidadesAceitas, agora);
         leads.Adicionar(lead);
+        foreach (var finalidade in finalidadesAceitas.Distinct())
+            leads.AdicionarConsentimento(ConsentimentoLgpd.Criar(lead.Id, finalidade, versaoTexto, agora));
         simulacao.LeadId = lead.Id;
         if (conteudoAnexo is not null && tipoAnexo is { } tipo)
         {
@@ -54,3 +61,4 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
 }
 
 public enum DesfechoCapturaLead { CalibracaoPendente, RoteadoParaHumano, PropostaEmitida }
+public sealed record ConfiguracaoConsentimentos(IReadOnlySet<string> VersoesTextoAceitas);

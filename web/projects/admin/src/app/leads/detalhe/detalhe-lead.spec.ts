@@ -33,6 +33,13 @@ describe('DetalheLead', () => {
         roteadoParaHumano: false,
         calibracaoPendente: false,
         possuiAnexo: true,
+        consentimentos: [
+          {
+            finalidade: 0,
+            versaoTexto: 'contato-comercial-v1',
+            concedidoEm: '2026-09-11T10:00:00Z',
+          },
+        ],
         resultado: {
           potenciaInstaladaKwp: 5.5,
           quantidadeModulos: 10,
@@ -46,5 +53,6 @@ describe('DetalheLead', () => {
     expect(texto).toContain('WhatsApp');
     expect(texto).toContain('5.50 kWp');
     expect(texto).toContain('Baixar conta anexada');
+    expect(texto).toContain('contato-comercial-v1');
   });
 });

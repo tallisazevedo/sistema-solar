@@ -10,7 +10,7 @@ public sealed class LeadTests
     {
         Assert.Throws<ArgumentException>(() => LeadEntidade.Criar(
             "Maria", "27999999999", "maria@exemplo.com", CanalPreferido.Email,
-            Guid.NewGuid(), Guid.NewGuid(), false, DateTimeOffset.UtcNow));
+            Guid.NewGuid(), Guid.NewGuid(), [], DateTimeOffset.UtcNow));
     }
 
     [Fact]
@@ -18,7 +18,7 @@ public sealed class LeadTests
     {
         var lead = LeadEntidade.Criar(
             "Maria", "27999999999", "maria@exemplo.com", CanalPreferido.Whatsapp,
-            Guid.NewGuid(), Guid.NewGuid(), true, DateTimeOffset.UtcNow);
+            Guid.NewGuid(), Guid.NewGuid(), [FinalidadeConsentimento.ContatoComercial], DateTimeOffset.UtcNow);
 
         Assert.Equal(StatusLead.Novo, lead.Status);
         Assert.Equal(OrigemLead.Landing, lead.Origem);
@@ -30,5 +30,17 @@ public sealed class LeadTests
     {
         Assert.Throws<ArgumentException>(() => AnexoConta.Criar(
             Guid.NewGuid(), TipoAnexoConta.Pdf, 0, "conta.pdf", DateTimeOffset.UtcNow));
+    }
+
+    [Fact]
+    public void Dada_FinalidadeEData_Quando_RegistraConsentimento_Entao_PreservaEvidencia()
+    {
+        var momento = new DateTimeOffset(2026, 9, 11, 10, 0, 0, TimeSpan.Zero);
+        var consentimento = ConsentimentoLgpd.Criar(Guid.NewGuid(),
+            FinalidadeConsentimento.ContatoComercial, "contato-comercial-v1", momento);
+
+        Assert.Equal(FinalidadeConsentimento.ContatoComercial, consentimento.Finalidade);
+        Assert.Equal("contato-comercial-v1", consentimento.VersaoTexto);
+        Assert.Equal(momento, consentimento.ConcedidoEm);
     }
 }

@@ -24,6 +24,7 @@ public sealed class SolarESDbContext(DbContextOptions<SolarESDbContext> options)
     public DbSet<MunicipioHsp> MunicipiosHsp => Set<MunicipioHsp>();
     public DbSet<LeadEntidade> Leads => Set<LeadEntidade>();
     public DbSet<AnexoConta> AnexosConta => Set<AnexoConta>();
+    public DbSet<ConsentimentoLgpd> ConsentimentosLgpd => Set<ConsentimentoLgpd>();
     public DbSet<ContaExtraida> ContasExtraidas => Set<ContaExtraida>();
     public DbSet<SimulacaoEntidade> Simulacoes => Set<SimulacaoEntidade>();
     public DbSet<PropostaEntidade> Propostas => Set<PropostaEntidade>();

@@ -89,7 +89,10 @@
     } @else {
       <form class="contato-form" (submit)="deixarContato($event)">
         <h2>Receba os próximos passos</h2>
-        <p>Usaremos seus dados para entrar em contato sobre esta simulação.</p>
+        <p>
+          Usaremos seus dados somente para contato sobre esta simulação. Consulte nossa
+          <a routerLink="/privacidade">política de privacidade</a> antes de preencher.
+        </p>
         <label>Nome<input name="Nome" required /></label>
         <label>Telefone<input name="Telefone" type="tel" required /></label>
         <label>E-mail<input name="Email" type="email" required /></label>
@@ -106,9 +109,10 @@
             accept="application/pdf,image/jpeg,image/png"
         /></label>
         <label class="consentimento"
-          ><input name="Consentimento" type="checkbox" value="true" required /> Aceito receber
-          contato sobre esta simulação.</label
+          ><input name="FinalidadesAceitas" type="checkbox" value="ContatoComercial" required />
+          Aceito o contato comercial sobre esta simulação.</label
         >
+        <input name="VersaoTexto" type="hidden" value="contato-comercial-v1" />
         @if (erroContato()) {
           <p class="erro" role="alert">{{ erroContato() }}</p>
         }
