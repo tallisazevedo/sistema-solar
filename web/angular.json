@@ -89,7 +89,7 @@
             "server": "projects/landing/src/main.server.ts",
             "outputMode": "server",
             "security": {
-              "allowedHosts": []
+              "allowedHosts": ["localhost", "127.0.0.1"]
             },
             "ssr": {
               "entry": "projects/landing/src/server.ts"
@@ -100,8 +100,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "180kB",
+                  "maximumError": "250kB"
                 },
                 {
                   "type": "anyComponentStyle",
