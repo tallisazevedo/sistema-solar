@@ -2,6 +2,7 @@ using System.Text.Json;
 using SolarES.Aplicacao.Compartilhado;
 using SolarES.Aplicacao.Configuracao;
 using SolarES.Dominio.Catalogo;
+using SolarES.Dominio.Configuracao;
 using SolarES.Dominio.Precificacao;
 using SolarES.Dominio.Simulacao;
 using SolarES.Dominio.Tarifas;
@@ -19,7 +20,10 @@ public sealed class SimulacaoAppService(
     IRepositorioCrud<TarifaVigente> tarifasRepositorio,
     TimeProvider relogio)
 {
-    public async Task<SimulacaoEntidade> CriarAsync(EntradaSimulacao entrada, CancellationToken ct)
+    public async Task<SimulacaoEntidade> CriarAsync(
+        EntradaSimulacao entrada,
+        CancellationToken ct,
+        OrigemSimulacao origem = OrigemSimulacao.Interna)
     {
         var configuracaoVersao = await configuracaoRepositorio.ObterPublicadaAtivaAsync(ct)
             ?? throw new InvalidOperationException("Nao ha versao de configuracao publicada; nao e possivel simular.");
@@ -72,6 +76,7 @@ public sealed class SimulacaoAppService(
         {
             Id = Guid.NewGuid(),
             ConfiguracaoVersaoId = configuracaoVersao.Id,
+            Origem = origem,
             EntradasSnapshot = JsonSerializer.Serialize(entrada),
             ResultadoSnapshot = JsonSerializer.Serialize(resultado),
             PotenciaKwp = resultado.PotenciaInstaladaKwp,
@@ -99,4 +104,29 @@ public sealed class SimulacaoAppService(
 
     public Task<SimulacaoEntidade?> ObterPorIdAsync(Guid id, CancellationToken ct) =>
         simulacaoRepositorio.ObterPorIdAsync(id, ct);
+
+    public async Task<SimulacaoPublicaResultado> CriarPublicaAsync(EntradaSimulacao entrada, CancellationToken ct)
+    {
+        var simulacao = await CriarAsync(entrada, ct, OrigemSimulacao.Landing);
+        return await MontarResultadoPublicoAsync(simulacao, ct);
+    }
+
+    public async Task<SimulacaoPublicaResultado?> ObterPublicaPorIdAsync(Guid id, CancellationToken ct)
+    {
+        var simulacao = await simulacaoRepositorio.ObterPorIdAsync(id, ct);
+        return simulacao is null || simulacao.Origem != OrigemSimulacao.Landing
+            ? null
+            : await MontarResultadoPublicoAsync(simulacao, ct);
+    }
+
+    private async Task<SimulacaoPublicaResultado> MontarResultadoPublicoAsync(
+        SimulacaoEntidade simulacao,
+        CancellationToken ct)
+    {
+        var versao = await configuracaoRepositorio.ObterPorIdAsync(simulacao.ConfiguracaoVersaoId, ct)
+            ?? throw new InvalidOperationException("Versao de configuracao da simulacao nao encontrada.");
+        return new SimulacaoPublicaResultado(simulacao, versao.Payload.PossuiPremissaProvisoria());
+    }
 }
+
+public sealed record SimulacaoPublicaResultado(SimulacaoEntidade Simulacao, bool CalibracaoPendente);

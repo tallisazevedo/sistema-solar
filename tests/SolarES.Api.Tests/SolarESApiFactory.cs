@@ -27,6 +27,7 @@ public sealed class SolarESApiFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development"); // MapOpenApi() so registra em Development
+        builder.UseSetting("Cors:OrigensPermitidas:0", "https://landing.solares.test");
         builder.ConfigureServices(services =>
         {
             // AddDbContext registra tanto DbContextOptions<T> quanto IDbContextOptionsConfiguration<T>;

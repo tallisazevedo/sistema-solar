@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start:admin": "ng serve admin --proxy-config projects/admin/proxy.conf.json",
-    "start:landing": "ng serve landing",
+    "start:landing": "ng serve landing --proxy-config projects/landing/proxy.conf.json",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test admin && ng test landing && ng test shared",

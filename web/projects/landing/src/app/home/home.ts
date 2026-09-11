@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Meta } from '@angular/platform-browser';
+import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -9,7 +9,8 @@ import { RouterLink } from '@angular/router';
   styleUrl: './home.css',
 })
 export class Home {
-  constructor(meta: Meta) {
+  constructor(meta: Meta, title: Title) {
+    title.setTitle('SolarES | Sua economia com energia solar começa aqui');
     meta.updateTag({
       name: 'description',
       content:
@@ -24,3 +25,5 @@ export class Home {
     meta.updateTag({ property: 'og:image', content: '/solar-es-compartilhamento.svg' });
   }
 }
+
+export default Home;

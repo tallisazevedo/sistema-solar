@@ -1,0 +1,75 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+}
+header,
+main {
+  max-width: 48rem;
+  margin: auto;
+  padding: 1.25rem;
+}
+header a {
+  color: inherit;
+  font-weight: 800;
+  text-decoration: none;
+}
+.etapa {
+  margin-top: 3rem;
+  color: var(--cor-destaque);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+h1 {
+  margin-bottom: 0.5rem;
+  font-size: clamp(2.2rem, 7vw, 4rem);
+  line-height: 1;
+}
+form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 700;
+}
+input,
+select,
+button {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.7rem;
+  border: 1px solid #9aaca6;
+  border-radius: 0.5rem;
+  font: inherit;
+}
+.checkbox {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+.checkbox input {
+  width: 1.25rem;
+  min-height: auto;
+}
+button {
+  border: 0;
+  background: var(--cor-acao);
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
+.erro {
+  grid-column: 1 / -1;
+  color: #9f1c18;
+}
+@media (max-width: 38rem) {
+  form {
+    grid-template-columns: 1fr;
+  }
+}

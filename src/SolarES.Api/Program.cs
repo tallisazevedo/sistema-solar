@@ -25,6 +25,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddCors(options => options.AddPolicy("Landing", policy =>
+{
+    var origens = builder.Configuration.GetSection("Cors:OrigensPermitidas").Get<string[]>() ?? [];
+    if (origens.Length > 0)
+    {
+        policy.WithOrigins(origens).AllowAnyHeader().AllowAnyMethod();
+    }
+}));
 
 builder.Services.AddDbContext<SolarESDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("SolarES")));
@@ -94,6 +102,7 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();

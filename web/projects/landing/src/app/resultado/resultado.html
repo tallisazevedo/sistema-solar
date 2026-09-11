@@ -1,0 +1,42 @@
+<header><a routerLink="/">☀ SolarES</a></header>
+<main>
+  @if (resultado(); as simulacao) {
+    <p class="etapa">Sua estimativa preliminar</p>
+    <h1>Seu imóvel tem potencial para economizar</h1>
+    <section aria-label="Resumo da simulação">
+      <article>
+        <span>Potência</span><strong>{{ formatarNumero(simulacao.potenciaKwp) }} kWp</strong>
+      </article>
+      <article>
+        <span>Módulos</span><strong>{{ simulacao.quantidadeModulos }}</strong>
+      </article>
+      <article>
+        <span>Investimento estimado</span
+        ><strong>{{ formatarMoeda(simulacao.investimentoEstimado) }}</strong>
+      </article>
+      <article>
+        <span>Economia mensal no 1º ano</span
+        ><strong>{{ formatarMoeda(simulacao.economiaMensalAno1) }}</strong>
+      </article>
+      <article>
+        <span>Retorno estimado</span
+        ><strong>{{
+          simulacao.paybackMeses
+            ? formatarNumero(simulacao.paybackMeses / 12, 1) + ' anos'
+            : 'A avaliar'
+        }}</strong>
+      </article>
+    </section>
+    @if (simulacao.calibracaoPendente) {
+      <p class="aviso">
+        Valores em calibração. Esta é uma estimativa preliminar sujeita a visita técnica.
+      </p>
+    }
+    <a class="voltar" routerLink="/simular">Alterar meus dados</a>
+  } @else if (erro()) {
+    <h1>Não encontramos esta simulação</h1>
+    <a routerLink="/simular">Fazer uma nova estimativa</a>
+  } @else {
+    <p>Carregando sua estimativa…</p>
+  }
+</main>
