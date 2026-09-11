@@ -1,0 +1,22 @@
+<h1>Leads da landing</h1>
+@if (carregando()) {
+  <p>Carregando…</p>
+}
+<div class="lista">
+  @for (lead of leads(); track lead.id) {
+    <a [routerLink]="['/leads', lead.id]" [class.roteado]="lead.roteadoParaHumano">
+      <strong>{{ lead.nome }}</strong
+      ><span>{{ lead.criadoEm | date: 'dd/MM/yyyy HH:mm' }}</span>
+      @if (lead.roteadoParaHumano) {
+        <mark>Engenharia</mark>
+      }
+      @if (lead.calibracaoPendente) {
+        <mark>Calibração pendente — sem PDF</mark>
+      }
+    </a>
+  } @empty {
+    @if (!carregando()) {
+      <p>Nenhum lead recebido.</p>
+    }
+  }
+</div>

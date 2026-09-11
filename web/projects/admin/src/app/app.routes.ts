@@ -15,6 +15,8 @@ import { Provisorias } from './premissas/provisorias/provisorias';
 import { Shell } from './shell/shell';
 import { ListaSimulacoes } from './simulacoes/lista/lista-simulacoes';
 import { NovaSimulacao } from './simulacoes/nova/nova-simulacao';
+import { ListaLeads } from './leads/lista/lista-leads';
+import { DetalheLead } from './leads/detalhe/detalhe-lead';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -24,17 +26,47 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', component: Home },
-      { path: 'catalogo/modulos-fotovoltaicos', component: CrudGenerico, data: { configFactory: criarConfigModulosFotovoltaicos } },
-      { path: 'catalogo/inversores', component: CrudGenerico, data: { configFactory: criarConfigInversores } },
-      { path: 'catalogo/estruturas', component: CrudGenerico, data: { configFactory: criarConfigEstruturas } },
-      { path: 'precos/faixas-preco', component: CrudGenerico, data: { configFactory: criarConfigFaixasPreco } },
-      { path: 'tarifas/vigentes', component: CrudGenerico, data: { configFactory: criarConfigTarifasVigentes } },
-      { path: 'tarifas/municipios', component: CrudGenerico, data: { configFactory: criarConfigMunicipiosHsp } },
-      { path: 'tarifas/distribuidoras', component: CrudGenerico, data: { configFactory: criarConfigDistribuidoras } },
+      {
+        path: 'catalogo/modulos-fotovoltaicos',
+        component: CrudGenerico,
+        data: { configFactory: criarConfigModulosFotovoltaicos },
+      },
+      {
+        path: 'catalogo/inversores',
+        component: CrudGenerico,
+        data: { configFactory: criarConfigInversores },
+      },
+      {
+        path: 'catalogo/estruturas',
+        component: CrudGenerico,
+        data: { configFactory: criarConfigEstruturas },
+      },
+      {
+        path: 'precos/faixas-preco',
+        component: CrudGenerico,
+        data: { configFactory: criarConfigFaixasPreco },
+      },
+      {
+        path: 'tarifas/vigentes',
+        component: CrudGenerico,
+        data: { configFactory: criarConfigTarifasVigentes },
+      },
+      {
+        path: 'tarifas/municipios',
+        component: CrudGenerico,
+        data: { configFactory: criarConfigMunicipiosHsp },
+      },
+      {
+        path: 'tarifas/distribuidoras',
+        component: CrudGenerico,
+        data: { configFactory: criarConfigDistribuidoras },
+      },
       { path: 'premissas', component: Premissas },
       { path: 'premissas/provisorias', component: Provisorias },
       { path: 'simulacoes', component: ListaSimulacoes },
       { path: 'simulacoes/nova', component: NovaSimulacao },
+      { path: 'leads', component: ListaLeads },
+      { path: 'leads/:id', component: DetalheLead },
     ],
   },
 ];

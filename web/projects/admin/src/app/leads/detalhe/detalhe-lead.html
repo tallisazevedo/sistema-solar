@@ -1,0 +1,25 @@
+<a routerLink="/leads">← Voltar aos leads</a>
+@if (lead(); as item) {
+  <h1>{{ item.nome }}</h1>
+  <section>
+    <h2>Contato</h2>
+    <p>{{ item.telefone }}</p>
+    <p>{{ item.email }}</p>
+    <p>Canal preferido: {{ canal(item.canalPreferido) }}</p>
+  </section>
+  <section>
+    <h2>Simulação</h2>
+    <p>Potência: {{ item.resultado.potenciaInstaladaKwp | number: '1.2-2' }} kWp</p>
+    <p>Módulos: {{ item.resultado.quantidadeModulos }}</p>
+    <p>Investimento: {{ item.resultado.capex | currency: 'BRL' }}</p>
+    <p>Economia mensal: {{ item.resultado.economiaMensalAno1 | currency: 'BRL' }}</p>
+  </section>
+  @if (item.roteadoParaHumano) {
+    <p class="aviso">Avaliação de engenharia necessária.</p>
+  }
+  @if (item.calibracaoPendente) {
+    <p class="aviso">Calibração pendente — proposta não emitida.</p>
+  }
+} @else if (erro()) {
+  <h1>Lead não encontrado</h1>
+}

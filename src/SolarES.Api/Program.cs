@@ -51,6 +51,7 @@ builder.Services.AddScoped<ISimulacaoRepository, EfSimulacaoRepository>();
 builder.Services.AddScoped<SimulacaoAppService>();
 builder.Services.AddScoped<ILeadRepository, EfLeadRepository>();
 builder.Services.AddScoped<LeadAppService>();
+builder.Services.AddScoped<ConsultaLeadsAppService>();
 
 builder.Services.AddScoped<IPropostaRepository, EfPropostaRepository>();
 builder.Services.AddScoped<IGeradorPdfProposta, GeradorPdfProposta>();
