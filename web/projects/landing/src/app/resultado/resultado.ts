@@ -26,6 +26,7 @@ export class Resultado implements OnInit {
   protected readonly enviando = signal(false);
   protected readonly erroContato = signal<string | null>(null);
   protected readonly desfecho = signal<DesfechoCapturaLead | null>(null);
+  protected readonly guardaAnexoAceita = signal(false);
 
   ngOnInit(): void {
     this.title.setTitle('Resultado da simulação | SolarES');
@@ -48,6 +49,10 @@ export class Resultado implements OnInit {
 
   protected formatarMoeda(valor: number): string {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+  }
+
+  protected alterarGuardaAnexo(event: Event): void {
+    this.guardaAnexoAceita.set((event.target as HTMLInputElement).checked);
   }
 
   protected deixarContato(event: SubmitEvent): void {

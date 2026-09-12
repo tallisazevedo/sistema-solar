@@ -28,8 +28,41 @@ public sealed class LeadTests
     [Fact]
     public void Dado_ArquivoVazio_Quando_CriaAnexo_Entao_RecusaCriacao()
     {
+        var recebidoEm = DateTimeOffset.UtcNow;
         Assert.Throws<ArgumentException>(() => AnexoConta.Criar(
-            Guid.NewGuid(), TipoAnexoConta.Pdf, 0, "conta.pdf", DateTimeOffset.UtcNow));
+            Guid.NewGuid(), TipoAnexoConta.Pdf, 0, "conta.pdf", recebidoEm, recebidoEm.AddDays(90)));
+    }
+
+    [Fact]
+    public void Dado_PrazoDescarteAnteriorAoRecebimento_Quando_CriaAnexo_Entao_RecusaCriacao()
+    {
+        var recebidoEm = DateTimeOffset.UtcNow;
+        Assert.Throws<ArgumentException>(() => AnexoConta.Criar(
+            Guid.NewGuid(), TipoAnexoConta.Pdf, 100, "conta.pdf", recebidoEm, recebidoEm.AddDays(-1)));
+    }
+
+    [Fact]
+    public void Dado_AnexoValido_Quando_Descarta_Entao_PreenchaDescartadoEm()
+    {
+        var recebidoEm = DateTimeOffset.UtcNow;
+        var anexo = AnexoConta.Criar(Guid.NewGuid(), TipoAnexoConta.Pdf, 100, "conta.pdf",
+            recebidoEm, recebidoEm.AddDays(90));
+
+        var momentoDescarte = recebidoEm.AddDays(91);
+        anexo.Descartar(momentoDescarte);
+
+        Assert.Equal(momentoDescarte, anexo.DescartadoEm);
+    }
+
+    [Fact]
+    public void Dado_AnexoJaDescartado_Quando_DescartaNovamente_Entao_Recusa()
+    {
+        var recebidoEm = DateTimeOffset.UtcNow;
+        var anexo = AnexoConta.Criar(Guid.NewGuid(), TipoAnexoConta.Pdf, 100, "conta.pdf",
+            recebidoEm, recebidoEm.AddDays(90));
+        anexo.Descartar(recebidoEm.AddDays(91));
+
+        Assert.Throws<InvalidOperationException>(() => anexo.Descartar(recebidoEm.AddDays(92)));
     }
 
     [Fact]

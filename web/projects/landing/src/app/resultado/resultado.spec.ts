@@ -59,6 +59,62 @@ describe('Resultado', () => {
     expect(texto).toContain('política de privacidade');
   });
 
+  it('so libera o campo de anexo apos o consentimento de guarda', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              id: 'simulacao-4',
+              potenciaKwp: 5.5,
+              quantidadeModulos: 10,
+              investimentoEstimado: 20000,
+              economiaMensalAno1: 450,
+              paybackMeses: 48,
+              calibracaoPendente: false,
+              coberturaPercentual: 100,
+              kitLitoral: false,
+              instalacaoRecomendada: true,
+              roteadaParaHumano: false,
+              motivoRoteamento: null,
+              projecao: [],
+            }),
+        } as Response),
+      ),
+    );
+    await TestBed.configureTestingModule({
+      imports: [Resultado],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: convertToParamMap({ id: 'simulacao-4' }) } },
+        },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(Resultado);
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const pagina = fixture.nativeElement as HTMLElement;
+    const campoAnexo = pagina.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const checkboxGuarda = pagina.querySelector<HTMLInputElement>(
+      '[name="FinalidadesAceitas"][value="GuardaAnexoConta"]',
+    )!;
+
+    expect(campoAnexo.disabled).toBe(true);
+
+    checkboxGuarda.checked = true;
+    checkboxGuarda.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(campoAnexo.disabled).toBe(false);
+  });
+
   it('oculta numeros quando a simulacao exige avaliacao humana', async () => {
     vi.stubGlobal(
       'fetch',

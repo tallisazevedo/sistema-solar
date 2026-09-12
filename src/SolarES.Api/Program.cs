@@ -83,12 +83,15 @@ builder.Services.AddScoped<ILeadRepository, EfLeadRepository>();
 builder.Services.AddScoped<LeadAppService>();
 builder.Services.AddSingleton(new ConfiguracaoConsentimentos(
     (builder.Configuration.GetSection("Lgpd:VersoesTextoAceitas").Get<string[]>() ?? []).ToHashSet()));
+builder.Services.AddSingleton(new ConfiguracaoRetencaoLgpd(
+    builder.Configuration.GetValue("Lgpd:PrazoDescarteAnexoDias", 90)));
 builder.Services.AddScoped<ConsultaLeadsAppService>();
 builder.Services.AddScoped<GerenciarLeadsAppService>();
 builder.Services.AddScoped<IEventoFunilRepository, EfEventoFunilRepository>();
 builder.Services.AddScoped<IExecutorTransacional, EfExecutorTransacional>();
 builder.Services.AddScoped<FunilAppService>();
 builder.Services.AddScoped<IArmazenamentoAnexoConta, ArmazenamentoAnexoContaEmDisco>();
+builder.Services.AddScoped<DescartarAnexosVencidosJob>();
 
 builder.Services.AddScoped<IPropostaRepository, EfPropostaRepository>();
 builder.Services.AddScoped<IDadosNotificacaoVencimentoQuery, EfDadosNotificacaoVencimentoQuery>();
@@ -173,6 +176,8 @@ gerenciadorJobsRecorrentes.AddOrUpdate<VencerPropostasJob>(
     job => job.ExecutarAsync(CancellationToken.None),
     Cron.Daily(horarioVencimento.Hour, horarioVencimento.Minute),
     new RecurringJobOptions { TimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo") });
+gerenciadorJobsRecorrentes.AddOrUpdate<DescartarAnexosVencidosJob>(
+    "descartar-anexos-vencidos", job => job.ExecutarAsync(CancellationToken.None), Cron.Daily());
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -230,6 +235,9 @@ app.MapHangfireDashboard("/hangfire", new DashboardOptions
 {
     Authorization = [new AcessoLocalHangfireDashboardFilter()],
 }).AllowAnonymous();
+
+app.Services.GetRequiredService<IRecurringJobManager>().AddOrUpdate<DescartarAnexosVencidosJob>(
+    "descartar-anexos-vencidos", job => job.ExecutarAsync(CancellationToken.None), Cron.Daily());
 
 app.Run();
 

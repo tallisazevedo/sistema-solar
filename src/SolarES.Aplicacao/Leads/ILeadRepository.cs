@@ -12,6 +12,7 @@ public interface ILeadRepository
     /// <summary>Quantos leads com o mesmo e-mail ou telefone (normalizados) ja foram criados desde o momento informado -- guarda anti-spam da issue #33.</summary>
     Task<int> ContarPorContatoDesdeAsync(string emailNormalizado, string telefoneNormalizado, DateTimeOffset desde, CancellationToken ct);
     Task<AnexoConta?> ObterAnexoAsync(Guid leadId, CancellationToken ct);
+    Task<IReadOnlyList<AnexoConta>> ListarAnexosParaDescarteAsync(DateTimeOffset ate, CancellationToken ct);
     void AdicionarAnexo(AnexoConta anexo);
     Task<IReadOnlyList<ConsentimentoLgpd>> ListarConsentimentosAsync(Guid leadId, CancellationToken ct);
     void AdicionarConsentimento(ConsentimentoLgpd consentimento);

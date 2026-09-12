@@ -11,6 +11,7 @@ public sealed class AnexoContaConfiguration : IEntityTypeConfiguration<AnexoCont
         builder.Property(a => a.Tipo).HasConversion<string>().HasMaxLength(10);
         builder.Property(a => a.CaminhoArmazenamento).HasMaxLength(1000);
         builder.HasIndex(a => a.LeadId).IsUnique();
+        builder.HasIndex(a => a.DescartarAte);
         builder.HasOne<Lead>().WithOne().HasForeignKey<AnexoConta>(a => a.LeadId)
             .OnDelete(DeleteBehavior.Cascade);
     }

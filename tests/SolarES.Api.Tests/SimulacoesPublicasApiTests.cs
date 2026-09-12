@@ -325,7 +325,7 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         var simulacao = await criar.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>();
         var pdf = "%PDF-1.4 conta teste"u8.ToArray();
 
-        using var formulario = FormularioLead(true, pdf, "conta.pdf", "application/pdf");
+        using var formulario = FormularioLead(true, pdf, "conta.pdf", "application/pdf", consentimentoGuardaAnexo: true);
         Assert.Equal(HttpStatusCode.OK,
             (await _cliente.PostAsync($"/api/publico/simulacoes/{simulacao!.Id}/lead", formulario)).StatusCode);
         using var escopo = _factory.Services.CreateScope();
@@ -334,6 +334,7 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         var anexo = await contexto.AnexosConta.SingleAsync(a => a.LeadId == lead.Id);
         Assert.Equal(TipoAnexoConta.Pdf, anexo.Tipo);
         Assert.Equal(pdf.Length, anexo.Tamanho);
+        Assert.True(anexo.DescartarAte > lead.CriadoEm);
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await _cliente.GetAsync($"/api/leads/{lead.Id}/anexo")).StatusCode);
         await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.VendedorEmail, SolarESApiFactory.VendedorSenha);
@@ -345,6 +346,27 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         var download = await _cliente.GetAsync($"/api/leads/{lead.Id}/anexo");
         Assert.Equal(HttpStatusCode.OK, download.StatusCode);
         Assert.Equal(pdf, await download.Content.ReadAsByteArrayAsync());
+    }
+
+    [Fact]
+    public async Task Dado_AnexoSemConsentimentoDeGuarda_Quando_CapturaLead_Entao_RecusaSemPersistir()
+    {
+        const string codigoIbge = "1515151";
+        await PrepararCenarioAsync(codigoIbge);
+        _cliente.DefaultRequestHeaders.Authorization = null;
+        var criar = await _cliente.PostAsJsonAsync("/api/publico/simulacoes",
+            new CriarSimulacaoPublicaRequest(500m, null, TipoLigacao.Monofasica,
+                PerfilImovel.Residencial, codigoIbge, TipoTelhado.Ceramico, 1000m, false));
+        var simulacao = await criar.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>();
+        var pdf = "%PDF-1.4 conta teste"u8.ToArray();
+
+        using var formulario = FormularioLead(true, pdf, "conta.pdf", "application/pdf", consentimentoGuardaAnexo: false);
+        var response = await _cliente.PostAsync($"/api/publico/simulacoes/{simulacao!.Id}/lead", formulario);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var escopo = _factory.Services.CreateScope();
+        var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        Assert.DoesNotContain(await contexto.Leads.ToListAsync(), lead => lead.SimulacaoId == simulacao.Id);
     }
 
     [Fact]
@@ -438,7 +460,8 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
 
     private static MultipartFormDataContent FormularioLead(bool consentimento, byte[]? anexo = null,
         string nomeArquivo = "conta.pdf", string tipoConteudo = "application/pdf",
-        string versaoTexto = "contato-comercial-v1", Guid? sessaoFunilId = null)
+        string versaoTexto = "contato-comercial-v1", Guid? sessaoFunilId = null,
+        bool consentimentoGuardaAnexo = false)
     {
         var formulario = new MultipartFormDataContent();
         formulario.Add(new StringContent("Maria Silva"), "Nome");
@@ -447,6 +470,8 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         formulario.Add(new StringContent(nameof(CanalPreferido.Email)), "CanalPreferido");
         if (consentimento)
             formulario.Add(new StringContent(nameof(FinalidadeConsentimento.ContatoComercial)), "FinalidadesAceitas");
+        if (consentimentoGuardaAnexo)
+            formulario.Add(new StringContent(nameof(FinalidadeConsentimento.GuardaAnexoConta)), "FinalidadesAceitas");
         formulario.Add(new StringContent(versaoTexto), "VersaoTexto");
         if (sessaoFunilId is { } sessao)
             formulario.Add(new StringContent(sessao.ToString()), "SessaoFunilId");

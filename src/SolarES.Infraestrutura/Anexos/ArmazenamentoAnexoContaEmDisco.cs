@@ -23,4 +23,10 @@ public sealed class ArmazenamentoAnexoContaEmDisco(IConfiguration configuracao, 
 
     public async Task<byte[]?> LerAsync(string caminho, CancellationToken ct) =>
         File.Exists(caminho) ? await File.ReadAllBytesAsync(caminho, ct) : null;
+
+    public Task ApagarAsync(string caminho, CancellationToken ct)
+    {
+        if (File.Exists(caminho)) File.Delete(caminho);
+        return Task.CompletedTask;
+    }
 }

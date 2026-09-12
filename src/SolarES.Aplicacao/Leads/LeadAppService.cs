@@ -15,7 +15,8 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
     IConfiguracaoVersaoRepository configuracoes, PropostaAppService propostas,
     EnvioPropostaAppService envios, IBackgroundJobClient jobs,
     IArmazenamentoAnexoConta armazenamentoAnexos, ConfiguracaoConsentimentos configuracaoConsentimentos,
-    ConfiguracaoLimiteEnvios limiteEnvios, FunilAppService funil, TimeProvider relogio)
+    ConfiguracaoLimiteEnvios limiteEnvios, FunilAppService funil,
+    ConfiguracaoRetencaoLgpd configuracaoRetencao, TimeProvider relogio)
 {
     public async Task<DesfechoCapturaLead> CapturarPublicoAsync(Guid simulacaoId, string nome,
         string telefone, string email, CanalPreferido canal,
@@ -24,6 +25,8 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
     {
         if (!configuracaoConsentimentos.VersoesTextoAceitas.Contains(versaoTexto))
             throw new ArgumentException("Versão do texto de consentimento desconhecida.");
+        if (conteudoAnexo is not null && !finalidadesAceitas.Contains(FinalidadeConsentimento.GuardaAnexoConta))
+            throw new ArgumentException("O consentimento para guarda do anexo é obrigatório para anexar a conta.");
         TipoAnexoConta? tipoAnexo = conteudoAnexo is null ? null : IdentificarTipoAnexo(conteudoAnexo);
         var simulacao = await simulacoes.ObterPorIdAsync(simulacaoId, ct);
         if (simulacao is null || simulacao.Origem != OrigemSimulacao.Landing)
@@ -50,8 +53,9 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
         if (conteudoAnexo is not null && tipoAnexo is { } tipo)
         {
             var caminho = await armazenamentoAnexos.SalvarAsync(lead.Id, tipo, conteudoAnexo, ct);
+            var recebidoEm = relogio.GetUtcNow();
             leads.AdicionarAnexo(AnexoConta.Criar(lead.Id, tipo, conteudoAnexo.LongLength,
-                caminho, relogio.GetUtcNow()));
+                caminho, recebidoEm, recebidoEm.AddDays(configuracaoRetencao.PrazoDescarteAnexoDias)));
         }
         await leads.SalvarAlteracoesAsync(ct);
         if (sessaoFunilId is { } sessao)
@@ -94,3 +98,4 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
 
 public enum DesfechoCapturaLead { CalibracaoPendente, RoteadoParaHumano, PropostaEmitida }
 public sealed record ConfiguracaoConsentimentos(IReadOnlySet<string> VersoesTextoAceitas);
+public sealed record ConfiguracaoRetencaoLgpd(int PrazoDescarteAnexoDias);

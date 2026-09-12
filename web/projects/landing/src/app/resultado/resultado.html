@@ -102,16 +102,27 @@
             <option value="Whatsapp">WhatsApp</option>
           </select></label
         >
+        <label class="consentimento"
+          ><input name="FinalidadesAceitas" type="checkbox" value="ContatoComercial" required />
+          Aceito o contato comercial sobre esta simulação.</label
+        >
+        <label class="consentimento"
+          ><input
+            name="FinalidadesAceitas"
+            type="checkbox"
+            value="GuardaAnexoConta"
+            (change)="alterarGuardaAnexo($event)"
+          />
+          Aceito a guarda da minha conta de luz por até 90 dias, conforme a
+          <a routerLink="/privacidade">política de privacidade</a>.</label
+        >
         <label
           >Conta de luz (opcional)<input
             name="Anexo"
             type="file"
             accept="application/pdf,image/jpeg,image/png"
+            [disabled]="!guardaAnexoAceita()"
         /></label>
-        <label class="consentimento"
-          ><input name="FinalidadesAceitas" type="checkbox" value="ContatoComercial" required />
-          Aceito o contato comercial sobre esta simulação.</label
-        >
         <input name="VersaoTexto" type="hidden" value="contato-comercial-v1" />
         @if (erroContato()) {
           <p class="erro" role="alert">{{ erroContato() }}</p>
