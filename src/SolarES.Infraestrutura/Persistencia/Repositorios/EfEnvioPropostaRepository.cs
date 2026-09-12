@@ -18,5 +18,10 @@ public sealed class EfEnvioPropostaRepository(SolarESDbContext contexto) : IEnvi
 
     public void Adicionar(EnvioProposta envio) => contexto.EnviosProposta.Add(envio);
 
+    public Task<int> ContarEnviadosPorDestinoDesdeAsync(string destinoNormalizado, DateTimeOffset desde, CancellationToken ct) =>
+        contexto.EnviosProposta.CountAsync(e =>
+            e.EnviadoEm != null && e.EnviadoEm >= desde
+            && string.Equals(e.Destino, destinoNormalizado, StringComparison.OrdinalIgnoreCase), ct);
+
     public Task SalvarAlteracoesAsync(CancellationToken ct) => contexto.SaveChangesAsync(ct);
 }

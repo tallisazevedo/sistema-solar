@@ -18,6 +18,11 @@ public sealed class EfLeadRepository(SolarESDbContext contexto) : ILeadRepositor
         .OrderByDescending(l => l.CriadoEm).ToListAsync(ct);
     public Task<LeadEntidade?> ObterPorIdAsync(Guid id, CancellationToken ct) =>
         contexto.Leads.SingleOrDefaultAsync(l => l.Id == id, ct);
+
+    public Task<int> ContarPorContatoDesdeAsync(string emailNormalizado, string telefoneNormalizado,
+        DateTimeOffset desde, CancellationToken ct) =>
+        contexto.Leads.CountAsync(l => l.CriadoEm >= desde
+            && (string.Equals(l.Email, emailNormalizado, StringComparison.OrdinalIgnoreCase) || l.Telefone == telefoneNormalizado), ct);
     public Task<AnexoConta?> ObterAnexoAsync(Guid leadId, CancellationToken ct) =>
         contexto.AnexosConta.SingleOrDefaultAsync(a => a.LeadId == leadId, ct);
     public void AdicionarAnexo(AnexoConta anexo) => contexto.AnexosConta.Add(anexo);

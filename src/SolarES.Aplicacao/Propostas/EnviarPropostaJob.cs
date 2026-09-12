@@ -13,6 +13,7 @@ public sealed class EnviarPropostaJob(
     IPropostaRepository propostaRepositorio,
     IArmazenamentoPdf armazenamentoPdf,
     IEnumerable<ICanalEnvioProposta> canais,
+    ConfiguracaoLimiteEnvios limiteEnvios,
     TimeProvider relogio)
 {
     [AutomaticRetry(Attempts = 3)]
@@ -36,6 +37,22 @@ public sealed class EnviarPropostaJob(
             ?? throw new InvalidOperationException($"Nenhum adaptador configurado para o canal '{envio.Canal}'.");
 
         var agora = relogio.GetUtcNow();
+
+        // Anti-spam (issue #33): destino que ja recebeu o limite de envios na janela nao
+        // chama o canal de novo -- sem isso, alguem poderia usar o formulario da landing
+        // pra fazer a integradora mandar e-mail/WhatsApp em massa pra terceiros.
+        var destinoNormalizado = NormalizarDestino(envio.Destino);
+        var quantidadeRecente = await enviosRepositorio.ContarEnviadosPorDestinoDesdeAsync(
+            destinoNormalizado, agora - limiteEnvios.Janela, ct);
+        if (quantidadeRecente >= limiteEnvios.LimitePorDestino)
+        {
+            envio.MarcarFalhou(
+                $"Limite de {limiteEnvios.LimitePorDestino} envios para este destino em {limiteEnvios.Janela.TotalHours}h foi atingido.",
+                agora);
+            await enviosRepositorio.SalvarAlteracoesAsync(ct);
+            return; // Nao propaga excecao: nao ha' motivo pro Hangfire retentar antes da janela passar.
+        }
+
         try
         {
             var idMensagem = await canal.EnviarAsync(envio.Destino, proposta.Numero, pdf, ct);
@@ -54,4 +71,6 @@ public sealed class EnviarPropostaJob(
             throw;
         }
     }
+
+    private static string NormalizarDestino(string destino) => destino.Trim().ToLowerInvariant();
 }

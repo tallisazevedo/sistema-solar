@@ -15,7 +15,7 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
     IConfiguracaoVersaoRepository configuracoes, PropostaAppService propostas,
     EnvioPropostaAppService envios, IBackgroundJobClient jobs,
     IArmazenamentoAnexoConta armazenamentoAnexos, ConfiguracaoConsentimentos configuracaoConsentimentos,
-    FunilAppService funil, TimeProvider relogio)
+    ConfiguracaoLimiteEnvios limiteEnvios, FunilAppService funil, TimeProvider relogio)
 {
     public async Task<DesfechoCapturaLead> CapturarPublicoAsync(Guid simulacaoId, string nome,
         string telefone, string email, CanalPreferido canal,
@@ -33,6 +33,14 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
         var municipioId = await leads.ObterMunicipioIdPorCodigoAsync(entrada.MunicipioCodigoIbge, ct)
             ?? throw new InvalidOperationException("Município da simulação não encontrado.");
         var agora = relogio.GetUtcNow();
+
+        // Contagem ANTES de persistir este lead -- senao ele contaria contra o proprio
+        // limite (issue #33).
+        var emailNormalizado = email.Trim().ToLowerInvariant();
+        var telefoneNormalizado = telefone.Trim();
+        var leadsRecentes = await leads.ContarPorContatoDesdeAsync(
+            emailNormalizado, telefoneNormalizado, agora - limiteEnvios.Janela, ct);
+
         var lead = Lead.Criar(nome, telefone, email, canal, simulacao.Id, municipioId,
             finalidadesAceitas, agora);
         leads.Adicionar(lead);
@@ -56,6 +64,12 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
             ?? throw new InvalidOperationException("Versão da configuração não encontrada.");
         if (simulacao.RoteadaParaHumano) return DesfechoCapturaLead.RoteadoParaHumano;
         if (versao.Payload.PossuiPremissaProvisoria()) return DesfechoCapturaLead.CalibracaoPendente;
+
+        // Anti-spam (issue #33): o lead e' registrado normalmente, so' o envio
+        // automatico e' suprimido -- resposta identica a calibracao pendente, pra nao
+        // revelar ao visitante que o limite existe.
+        if (leadsRecentes >= limiteEnvios.LimitePorDestino) return DesfechoCapturaLead.CalibracaoPendente;
+
         var (proposta, jobIdGeracaoPdf) = await propostas.GerarComJobIdAsync(simulacao.Id, null, ct);
 
         // Envio automatico pelo canal escolhido na landing -- mesma guarda de

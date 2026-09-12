@@ -97,6 +97,9 @@ builder.Services.AddScoped<IArmazenamentoPdf, ArmazenamentoPdfEmDisco>();
 builder.Services.AddScoped<GerarPdfPropostaJob>();
 builder.Services.AddScoped<PropostaAppService>();
 
+builder.Services.AddSingleton(new ConfiguracaoLimiteEnvios(
+    builder.Configuration.GetValue<int?>("LimiteEnvios:PorDestino") ?? 3,
+    TimeSpan.FromHours(builder.Configuration.GetValue<double?>("LimiteEnvios:JanelaHoras") ?? 24)));
 builder.Services.AddScoped<IEnvioPropostaRepository, EfEnvioPropostaRepository>();
 builder.Services.AddScoped<EnvioPropostaAppService>();
 builder.Services.AddScoped<EnviarPropostaJob>();
