@@ -56,6 +56,7 @@ builder.Services.AddScoped<LeadAppService>();
 builder.Services.AddSingleton(new ConfiguracaoConsentimentos(
     (builder.Configuration.GetSection("Lgpd:VersoesTextoAceitas").Get<string[]>() ?? []).ToHashSet()));
 builder.Services.AddScoped<ConsultaLeadsAppService>();
+builder.Services.AddScoped<GerenciarLeadsAppService>();
 builder.Services.AddScoped<IExecutorTransacional, EfExecutorTransacional>();
 builder.Services.AddScoped<IArmazenamentoAnexoConta, ArmazenamentoAnexoContaEmDisco>();
 

@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using SolarES.Api.Contratos;
 using SolarES.Aplicacao.Leads;
 using SolarES.Dominio.Lead;
@@ -7,11 +9,31 @@ namespace SolarES.Api.Controllers;
 
 [ApiController]
 [Route("api/leads")]
-public sealed class LeadsController(ConsultaLeadsAppService servico) : ControllerBase
+public sealed class LeadsController(ConsultaLeadsAppService servico, GerenciarLeadsAppService gerenciador) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<LeadResponse>>> Listar(CancellationToken ct) =>
-        Ok((await servico.ListarAsync(ct)).Select(ParaResponse));
+    public async Task<ActionResult<IReadOnlyList<LeadResponse>>> Listar([FromQuery] OrigemLead? origem,
+        [FromQuery] StatusLead? status, CancellationToken ct) =>
+        Ok((await servico.ListarAsync(origem, status, ct)).Select(ParaResponse));
+
+    [HttpPost]
+    [Authorize(Roles = "Dono,Vendedor")]
+    public async Task<ActionResult<LeadResponse>> Criar(CriarLeadManualRequest request, CancellationToken ct)
+    {
+        var lead = await gerenciador.CriarManualAsync(request.Nome, request.Telefone, request.Email, request.Origem,
+            request.ConsentimentoContato, request.VersaoTextoConsentimento, ct);
+        var resultado = await servico.ObterAsync(lead.Id, ct) ?? throw new InvalidOperationException("Lead criado nao encontrado.");
+        return CreatedAtAction(nameof(Obter), new { id = lead.Id }, ParaResponse(resultado));
+    }
+
+    [HttpPatch("{id:guid}/status")]
+    [Authorize(Roles = "Dono,Vendedor")]
+    public async Task<IActionResult> AlterarStatus(Guid id, AlterarStatusLeadRequest request, CancellationToken ct)
+    {
+        var usuarioId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        return await gerenciador.AlterarStatusAsync(id, request.Status, request.VisitaTecnicaAgendadaPara,
+            usuarioId, ct) ? NoContent() : NotFound();
+    }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<LeadResponse>> Obter(Guid id, CancellationToken ct)
@@ -36,7 +58,8 @@ public sealed class LeadsController(ConsultaLeadsAppService servico) : Controlle
 
     private static LeadResponse ParaResponse(LeadAdministrativoResultado lead) => new(
         lead.Id, lead.Nome, lead.Telefone, lead.Email, lead.CanalPreferido, lead.Status,
-        lead.CriadoEm, lead.RoteadoParaHumano, lead.CalibracaoPendente, lead.PossuiAnexo,
+        lead.Origem, lead.VisitaTecnicaAgendadaPara, lead.CriadoEm,
+        lead.RoteadoParaHumano, lead.CalibracaoPendente, lead.PossuiAnexo,
         lead.SimulacaoId, lead.Resultado,
         lead.Consentimentos.Select(c => new ConsentimentoResponse(c.Finalidade, c.VersaoTexto, c.ConcedidoEm)).ToList());
 }

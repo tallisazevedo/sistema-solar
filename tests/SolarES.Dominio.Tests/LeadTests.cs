@@ -43,4 +43,38 @@ public sealed class LeadTests
         Assert.Equal("contato-comercial-v1", consentimento.VersaoTexto);
         Assert.Equal(momento, consentimento.ConcedidoEm);
     }
+
+    [Fact]
+    public void Dado_LeadNovo_Quando_AvancaAteConvertido_Entao_RegistraTransicoesEVisita()
+    {
+        var agora = DateTimeOffset.UtcNow;
+        var usuarioId = Guid.NewGuid();
+        var visita = agora.AddDays(2);
+        var lead = LeadEntidade.CriarManual("Maria", "27999999999", "maria@exemplo.com",
+            OrigemLead.Indicacao, agora);
+
+        var inicio = lead.AlterarStatus(StatusLead.EmAtendimento, null, usuarioId, agora);
+        lead.AlterarStatus(StatusLead.VisitaTecnicaAgendada, visita, usuarioId, agora);
+        lead.AlterarStatus(StatusLead.Convertido, null, usuarioId, agora);
+
+        Assert.Equal(StatusLead.Novo, inicio.StatusAnterior);
+        Assert.Equal(StatusLead.EmAtendimento, inicio.StatusNovo);
+        Assert.Equal(visita, lead.VisitaTecnicaAgendadaPara);
+        Assert.Equal(StatusLead.Convertido, lead.Status);
+    }
+
+    [Fact]
+    public void Dado_LeadConvertido_Quando_TentaNovaTransicao_Entao_Recusa()
+    {
+        var agora = DateTimeOffset.UtcNow;
+        var usuarioId = Guid.NewGuid();
+        var lead = LeadEntidade.CriarManual("Maria", "27999999999", "maria@exemplo.com",
+            OrigemLead.Telefone, agora);
+        lead.AlterarStatus(StatusLead.EmAtendimento, null, usuarioId, agora);
+        lead.AlterarStatus(StatusLead.VisitaTecnicaAgendada, agora.AddDays(1), usuarioId, agora);
+        lead.AlterarStatus(StatusLead.Convertido, null, usuarioId, agora);
+
+        Assert.Throws<TransicaoInvalidaException>(() =>
+            lead.AlterarStatus(StatusLead.Perdido, null, usuarioId, agora));
+    }
 }

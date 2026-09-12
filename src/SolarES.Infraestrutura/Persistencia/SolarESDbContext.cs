@@ -31,6 +31,7 @@ public sealed class SolarESDbContext(DbContextOptions<SolarESDbContext> options)
     public DbSet<PropostaEntidade> Propostas => Set<PropostaEntidade>();
     public DbSet<EnvioProposta> EnviosProposta => Set<EnvioProposta>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<HistoricoStatusLead> HistoricosStatusLead => Set<HistoricoStatusLead>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -55,4 +55,24 @@ describe('DetalheLead', () => {
     expect(texto).toContain('Baixar conta anexada');
     expect(texto).toContain('contato-comercial-v1');
   });
+
+  it('inicia o atendimento de um lead novo', async () => {
+    await TestBed.configureTestingModule({ imports: [DetalheLead], providers: [provideRouter([]),
+      provideHttpClient(), provideHttpClientTesting(), provideApiConfiguration(''),
+      { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: '1' }) } } }] })
+      .compileComponents();
+    const fixture = TestBed.createComponent(DetalheLead);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    const lead = { id: '1', nome: 'Maria', telefone: '27', email: 'maria@teste.com', canalPreferido: null,
+      status: 0, origem: 1, visitaTecnicaAgendadaPara: null, roteadoParaHumano: false,
+      calibracaoPendente: false, possuiAnexo: false, consentimentos: [], simulacaoId: null, resultado: null };
+    http.expectOne('/api/leads/1').flush(lead);
+    fixture.detectChanges();
+    const botao = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
+      .find((item) => item.textContent?.includes('Iniciar atendimento'))!;
+    (botao as HTMLButtonElement).click();
+    http.expectOne('/api/leads/1/status').flush(null);
+    http.expectOne('/api/leads/1').flush({ ...lead, status: 1 });
+  });
 });

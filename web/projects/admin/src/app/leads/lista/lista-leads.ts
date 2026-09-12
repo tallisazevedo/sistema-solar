@@ -13,6 +13,8 @@ export class ListaLeads implements OnInit {
   private readonly servico = inject(LeadsService);
   protected readonly leads = signal<LeadAdmin[]>([]);
   protected readonly carregando = signal(true);
+  protected readonly origem = signal<number | undefined>(undefined);
+  protected readonly status = signal<number | undefined>(undefined);
   ngOnInit(): void {
     this.servico.listar().subscribe({
       next: (leads) => {
@@ -22,4 +24,9 @@ export class ListaLeads implements OnInit {
       error: () => this.carregando.set(false),
     });
   }
+  protected filtrar(): void {
+    this.servico.listar(this.origem(), this.status()).subscribe((leads) => this.leads.set(leads));
+  }
+  protected selecionarOrigem(valor: string): void { this.origem.set(valor === '' ? undefined : Number(valor)); }
+  protected selecionarStatus(valor: string): void { this.status.set(valor === '' ? undefined : Number(valor)); }
 }

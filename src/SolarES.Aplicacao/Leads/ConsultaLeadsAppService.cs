@@ -10,9 +10,10 @@ namespace SolarES.Aplicacao.Leads;
 public sealed class ConsultaLeadsAppService(ILeadRepository leads, ISimulacaoRepository simulacoes,
     IConfiguracaoVersaoRepository configuracoes, IArmazenamentoAnexoConta armazenamentoAnexos)
 {
-    public async Task<IReadOnlyList<LeadAdministrativoResultado>> ListarAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<LeadAdministrativoResultado>> ListarAsync(OrigemLead? origem, StatusLead? status,
+        CancellationToken ct)
     {
-        var encontrados = await leads.ListarDaLandingAsync(ct);
+        var encontrados = await leads.ListarAsync(origem, status, ct);
         var resultados = new List<LeadAdministrativoResultado>(encontrados.Count);
         foreach (var lead in encontrados)
         {
@@ -39,7 +40,14 @@ public sealed class ConsultaLeadsAppService(ILeadRepository leads, ISimulacaoRep
 
     private async Task<LeadAdministrativoResultado?> MontarAsync(Lead lead, CancellationToken ct)
     {
-        if (lead.SimulacaoId is not { } simulacaoId) return null;
+        if (lead.SimulacaoId is not { } simulacaoId)
+        {
+            var consentimentosManuais = await leads.ListarConsentimentosAsync(lead.Id, ct);
+            return new(lead.Id, lead.Nome, lead.Telefone, lead.Email, lead.CanalPreferido,
+                lead.Status, lead.Origem, lead.VisitaTecnicaAgendadaPara, lead.CriadoEm, false, false, false, null, null,
+                consentimentosManuais.Select(c => new ConsentimentoAdministrativoResultado(
+                    c.Finalidade, c.VersaoTexto, c.ConcedidoEm)).ToList());
+        }
         var simulacao = await simulacoes.ObterPorIdAsync(simulacaoId, ct);
         if (simulacao is null) return null;
         var versao = await configuracoes.ObterPorIdAsync(simulacao.ConfiguracaoVersaoId, ct)
@@ -49,7 +57,7 @@ public sealed class ConsultaLeadsAppService(ILeadRepository leads, ISimulacaoRep
         var possuiAnexo = await leads.ObterAnexoAsync(lead.Id, ct) is not null;
         var consentimentos = await leads.ListarConsentimentosAsync(lead.Id, ct);
         return new(lead.Id, lead.Nome, lead.Telefone, lead.Email, lead.CanalPreferido,
-            lead.Status, lead.CriadoEm, simulacao.RoteadaParaHumano,
+            lead.Status, lead.Origem, lead.VisitaTecnicaAgendadaPara, lead.CriadoEm, simulacao.RoteadaParaHumano,
             versao.Payload.PossuiPremissaProvisoria(), possuiAnexo, simulacao.Id, resultado,
             consentimentos.Select(c => new ConsentimentoAdministrativoResultado(
                 c.Finalidade, c.VersaoTexto, c.ConcedidoEm)).ToList());
@@ -57,9 +65,10 @@ public sealed class ConsultaLeadsAppService(ILeadRepository leads, ISimulacaoRep
 }
 
 public sealed record LeadAdministrativoResultado(Guid Id, string Nome, string Telefone, string Email,
-    CanalPreferido? CanalPreferido, StatusLead Status, DateTimeOffset CriadoEm,
+    CanalPreferido? CanalPreferido, StatusLead Status, OrigemLead Origem,
+    DateTimeOffset? VisitaTecnicaAgendadaPara, DateTimeOffset CriadoEm,
     bool RoteadoParaHumano, bool CalibracaoPendente, bool PossuiAnexo,
-    Guid SimulacaoId, ResultadoSimulacao Resultado,
+    Guid? SimulacaoId, ResultadoSimulacao? Resultado,
     IReadOnlyList<ConsentimentoAdministrativoResultado> Consentimentos);
 public sealed record ConsentimentoAdministrativoResultado(FinalidadeConsentimento Finalidade,
     string VersaoTexto, DateTimeOffset ConcedidoEm);
