@@ -12,6 +12,7 @@ export interface CriarSimulacaoPublica {
   tipoTelhado: number;
   areaDisponivelM2: number;
   possuiGeracaoPropria: boolean;
+  sessaoFunilId: string;
 }
 
 export interface SimulacaoPublica {
@@ -33,6 +34,23 @@ export interface SimulacaoPublica {
 export type DesfechoCapturaLead = 'CalibracaoPendente' | 'RoteadoParaHumano' | 'PropostaEmitida';
 
 export class PublicoApiService {
+  registrarInicioSimulacao(sessaoFunilId: string): void {
+    const corpo = JSON.stringify({ tipo: 0, sessaoFunilId });
+    try {
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon &&
+          navigator.sendBeacon('/api/publico/eventos', new Blob([corpo], { type: 'application/json' }))) {
+        return;
+      }
+    } catch {
+      // Telemetria nunca deve interromper o fluxo principal.
+    }
+    try {
+      void fetch('/api/publico/eventos', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: corpo, keepalive: true }).catch(() => undefined);
+    } catch {
+      // Alguns ambientes podem lançar antes mesmo de devolver uma Promise.
+    }
+  }
   listarMunicipios(): Promise<MunicipioPublico[]> {
     return this.obter<MunicipioPublico[]>('/api/publico/municipios');
   }

@@ -1,0 +1,14 @@
+<h1>Funil</h1>
+<form (submit)="consultar($event)">
+  <label>De <input type="date" name="de" required /></label>
+  <label>Até <input type="date" name="ate" required /></label>
+  <button type="submit">Consultar</button>
+</form>
+@if (metricas(); as item) {
+  <section>
+    <p>Simulações iniciadas: <strong>{{ item.sessoesIniciadas }}</strong></p>
+    <p>Simulações concluídas: <strong>{{ item.sessoesConcluidas }}</strong></p>
+    <p>Taxa de conclusão: <strong>{{ item.taxaConclusaoPercentual | number: '1.0-2' }}%</strong></p>
+  </section>
+}
+@if (erro()) { <p role="alert">Não foi possível consultar o funil.</p> }

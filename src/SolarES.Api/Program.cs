@@ -12,6 +12,7 @@ using SolarES.Aplicacao.Identidade;
 using SolarES.Aplicacao.Propostas;
 using SolarES.Aplicacao.Simulacoes;
 using SolarES.Aplicacao.Leads;
+using SolarES.Aplicacao.Metricas;
 using SolarES.Infraestrutura.Identidade;
 using SolarES.Infraestrutura.Anexos;
 using SolarES.Infraestrutura.Envios;
@@ -57,7 +58,9 @@ builder.Services.AddSingleton(new ConfiguracaoConsentimentos(
     (builder.Configuration.GetSection("Lgpd:VersoesTextoAceitas").Get<string[]>() ?? []).ToHashSet()));
 builder.Services.AddScoped<ConsultaLeadsAppService>();
 builder.Services.AddScoped<GerenciarLeadsAppService>();
+builder.Services.AddScoped<IEventoFunilRepository, EfEventoFunilRepository>();
 builder.Services.AddScoped<IExecutorTransacional, EfExecutorTransacional>();
+builder.Services.AddScoped<FunilAppService>();
 builder.Services.AddScoped<IArmazenamentoAnexoConta, ArmazenamentoAnexoContaEmDisco>();
 
 builder.Services.AddScoped<IPropostaRepository, EfPropostaRepository>();

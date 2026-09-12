@@ -18,7 +18,8 @@ public sealed record CriarSimulacaoPublicaRequest(
     [Required, MaxLength(7)] string MunicipioCodigoIbge,
     TipoTelhado TipoTelhado,
     [Range(0.01, double.MaxValue)] decimal AreaDisponivelM2,
-    bool PossuiGeracaoPropria);
+    bool PossuiGeracaoPropria,
+    Guid? SessaoFunilId = null);
 
 public sealed record MunicipioPublicoResponse(string CodigoIbge, string Nome);
 

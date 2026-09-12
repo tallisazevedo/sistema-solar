@@ -11,6 +11,7 @@ using SolarES.Dominio.Tarifas;
 using SolarES.Dominio.Lead;
 using SolarES.Aplicacao.Leads;
 using SolarES.Dominio.Premissas;
+using SolarES.Dominio.Metricas;
 using SolarES.Dominio.Proposta;
 using SolarES.Infraestrutura.Persistencia;
 
@@ -37,9 +38,10 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         var municipios = await _cliente.GetFromJsonAsync<List<MunicipioPublicoResponse>>("/api/publico/municipios");
         Assert.Contains(municipios!, municipio => municipio.CodigoIbge == codigoIbge && municipio.Nome == "Municipio Publico");
 
+        var sessaoFunilId = Guid.NewGuid();
         var request = new CriarSimulacaoPublicaRequest(
             500m, null, TipoLigacao.Monofasica, PerfilImovel.Residencial, codigoIbge,
-            TipoTelhado.Ceramico, 1000m, PossuiGeracaoPropria: false);
+            TipoTelhado.Ceramico, 1000m, PossuiGeracaoPropria: false, sessaoFunilId);
         var criar = await _cliente.PostAsJsonAsync("/api/publico/simulacoes", request);
 
         Assert.Equal(HttpStatusCode.Created, criar.StatusCode);
@@ -65,6 +67,9 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         Assert.Equal(12, historico.GetArrayLength());
         Assert.All(historico.EnumerateArray(), consumo => Assert.Equal(500m, consumo.GetDecimal()));
         Assert.False(string.IsNullOrWhiteSpace(persistida.ResultadoSnapshot));
+        var conclusao = await contexto.EventosFunil.SingleAsync(e =>
+            e.SessaoFunilId == sessaoFunilId && e.Tipo == TipoEventoFunil.SimulacaoConcluida);
+        Assert.Equal(resultado.Id, conclusao.SimulacaoId);
     }
 
     [Fact]

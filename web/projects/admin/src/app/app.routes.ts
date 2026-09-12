@@ -20,6 +20,7 @@ import { DetalheLead } from './leads/detalhe/detalhe-lead';
 import { NovoLead } from './leads/novo/novo-lead';
 import { ListaPropostas } from './propostas/lista/lista-propostas';
 import { DetalheProposta } from './propostas/detalhe/detalhe-proposta';
+import { Funil } from './metricas/funil/funil';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -73,6 +74,7 @@ export const routes: Routes = [
       { path: 'leads/:id', component: DetalheLead },
       { path: 'propostas', component: ListaPropostas },
       { path: 'propostas/:id', component: DetalheProposta },
+      { path: 'metricas/funil', component: Funil },
     ],
   },
 ];

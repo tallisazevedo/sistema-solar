@@ -19,6 +19,10 @@ describe('Simulador', () => {
   beforeEach(async () => {
     fetchMock.mockClear();
     vi.stubGlobal('fetch', fetchMock);
+    Object.defineProperty(navigator, 'sendBeacon', {
+      configurable: true,
+      value: vi.fn(() => { throw new Error('telemetria indisponivel'); }),
+    });
     await TestBed.configureTestingModule({
       imports: [Simulador],
       providers: [provideRouter([])],
@@ -28,6 +32,11 @@ describe('Simulador', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await fixture.whenStable();
     fixture.detectChanges();
+  });
+
+  it('continua utilizavel quando o envio de telemetria falha', () => {
+    expect((fixture.nativeElement as HTMLElement).querySelector('form')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Conte um pouco sobre seu imóvel');
   });
 
   it('envia o consumo medio e abre o resultado', async () => {
@@ -53,6 +62,7 @@ describe('Simulador', () => {
       expect.objectContaining({ consumoMedioMensalKwh: 500, municipioCodigoIbge: '3205309' }),
     );
     expect(navigate).toHaveBeenCalledWith(['/resultado', 'simulacao-1']);
+    expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/api/publico/eventos'))).toBe(true);
   });
 
   it('mantem os dados quando a API falha', async () => {

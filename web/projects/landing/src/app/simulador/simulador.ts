@@ -36,6 +36,7 @@ export class Simulador implements OnInit {
     'Nov',
     'Dez',
   ];
+  private readonly sessaoFunilId = this.obterSessaoFunilId();
 
   protected get municipiosFiltrados(): MunicipioPublico[] {
     const termo = this.busca().trim().toLocaleLowerCase('pt-BR');
@@ -52,6 +53,7 @@ export class Simulador implements OnInit {
       this.meta,
       'Informe seu consumo para simular sua economia com energia solar.',
     );
+    this.api.registrarInicioSimulacao(this.sessaoFunilId);
     this.api
       .listarMunicipios()
       .then((municipios) => this.municipios.set(municipios))
@@ -99,6 +101,7 @@ export class Simulador implements OnInit {
         tipoTelhado: Number(dados.get('tipoTelhado')),
         areaDisponivelM2: Number(dados.get('largura')) * Number(dados.get('comprimento')),
         possuiGeracaoPropria: dados.has('possuiGeracaoPropria'),
+        sessaoFunilId: this.sessaoFunilId,
       })
       .then(({ id }) => this.router.navigate(['/resultado', id]))
       .catch(() => {
@@ -107,6 +110,29 @@ export class Simulador implements OnInit {
           'Não foi possível calcular agora. Seus dados continuam aqui para tentar novamente.',
         );
       });
+  }
+
+  private obterSessaoFunilId(): string {
+    const nova = () => {
+      if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+      const bytes = new Uint8Array(16);
+      if (globalThis.crypto?.getRandomValues) globalThis.crypto.getRandomValues(bytes);
+      else for (let indice = 0; indice < bytes.length; indice++) bytes[indice] = Math.floor(Math.random() * 256);
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hexadecimal = Array.from(bytes, (valor) => valor.toString(16).padStart(2, '0')).join('');
+      return `${hexadecimal.slice(0, 8)}-${hexadecimal.slice(8, 12)}-${hexadecimal.slice(12, 16)}-${hexadecimal.slice(16, 20)}-${hexadecimal.slice(20)}`;
+    };
+    try {
+      const chave = 'solares.funil.sessao';
+      const existente = sessionStorage.getItem(chave);
+      if (existente) return existente;
+      const criada = nova();
+      sessionStorage.setItem(chave, criada);
+      return criada;
+    } catch {
+      return nova();
+    }
   }
 }
 

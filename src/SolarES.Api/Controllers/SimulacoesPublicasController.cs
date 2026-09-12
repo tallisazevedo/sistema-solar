@@ -8,6 +8,7 @@ using SolarES.Aplicacao.Simulacoes;
 using SolarES.Aplicacao.Leads;
 using SolarES.Dominio.Simulacao;
 using SolarES.Dominio.Tarifas;
+using SolarES.Aplicacao.Metricas;
 
 namespace SolarES.Api.Controllers;
 
@@ -18,6 +19,7 @@ namespace SolarES.Api.Controllers;
 public sealed class SimulacoesPublicasController(
     SimulacaoAppService simulacaoAppService,
     LeadAppService leadAppService,
+    FunilAppService funilAppService,
     IRepositorioCrud<MunicipioHsp> municipiosRepositorio) : ControllerBase
 {
     [HttpPost("simulacoes/{id:guid}/lead")]
@@ -63,6 +65,8 @@ public sealed class SimulacoesPublicasController(
             return ValidationProblem(ModelState);
         }
         var resultado = await simulacaoAppService.CriarPublicaAsync(ParaEntrada(request, historico), ct);
+        if (request.SessaoFunilId is { } sessaoFunilId)
+            await funilAppService.RegistrarConclusaoAsync(sessaoFunilId, resultado.Simulacao.Id, ct);
         var response = ParaResponse(resultado);
         return CreatedAtAction(nameof(ObterPorId), new { id = response.Id }, response);
     }

@@ -6,6 +6,7 @@ using SolarES.Dominio.Identidade;
 using SolarES.Dominio.Precificacao;
 using SolarES.Dominio.Tarifas;
 using SolarES.Dominio.Lead;
+using SolarES.Dominio.Metricas;
 using SolarES.Dominio.Proposta;
 using PropostaEntidade = SolarES.Dominio.Proposta.Proposta;
 using SimulacaoEntidade = SolarES.Dominio.Simulacao.Simulacao;
@@ -32,6 +33,7 @@ public sealed class SolarESDbContext(DbContextOptions<SolarESDbContext> options)
     public DbSet<EnvioProposta> EnviosProposta => Set<EnvioProposta>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<HistoricoStatusLead> HistoricosStatusLead => Set<HistoricoStatusLead>();
+    public DbSet<EventoFunil> EventosFunil => Set<EventoFunil>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
