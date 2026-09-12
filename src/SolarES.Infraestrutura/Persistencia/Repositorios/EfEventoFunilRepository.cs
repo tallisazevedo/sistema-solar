@@ -16,6 +16,10 @@ public sealed class EfEventoFunilRepository(SolarESDbContext contexto) : IEvento
             .Select(e => e.SessaoFunilId).Distinct().CountAsync(ct);
         var concluidas = await periodo.Where(e => e.Tipo == TipoEventoFunil.SimulacaoConcluida)
             .Select(e => e.SessaoFunilId).Distinct().CountAsync(ct);
-        return new(iniciadas, concluidas);
+        var leadsCapturados = await periodo.Where(e => e.Tipo == TipoEventoFunil.LeadCapturado)
+            .Select(e => e.SessaoFunilId).Distinct().CountAsync(ct);
+        var anexosOferecidos = await periodo.Where(e => e.Tipo == TipoEventoFunil.AnexoOferecido)
+            .Select(e => e.SessaoFunilId).Distinct().CountAsync(ct);
+        return new(iniciadas, concluidas, leadsCapturados, anexosOferecidos);
     }
 }

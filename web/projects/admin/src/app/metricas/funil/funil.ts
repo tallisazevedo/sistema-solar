@@ -3,7 +3,24 @@ import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { ApiConfiguration } from 'shared';
 
-interface MetricasFunil { sessoesIniciadas: number; sessoesConcluidas: number; taxaConclusaoPercentual: number; }
+interface ConversaoOrigem {
+  origem: string;
+  leadsCriados: number;
+  leadsConvertidos: number;
+  conversaoPercentual: number;
+}
+
+interface MetricasFunil {
+  sessoesIniciadas: number;
+  sessoesConcluidas: number;
+  taxaConclusaoPercentual: number;
+  leadsCapturados: number;
+  anexosOferecidos: number;
+  leadsLanding: number;
+  leadsComAnexo: number;
+  percentualComAnexo: number;
+  conversaoPorOrigem: ConversaoOrigem[];
+}
 
 @Component({ selector: 'app-funil', imports: [DecimalPipe], templateUrl: './funil.html' })
 export class Funil {

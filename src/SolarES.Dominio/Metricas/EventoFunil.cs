@@ -14,6 +14,12 @@ public sealed class EventoFunil : EntidadeBase
     public static EventoFunil CriarConclusao(Guid sessaoFunilId, Guid simulacaoId, DateTimeOffset ocorridoEm) =>
         Criar(TipoEventoFunil.SimulacaoConcluida, sessaoFunilId, ocorridoEm, simulacaoId);
 
+    public static EventoFunil CriarLeadCapturado(Guid sessaoFunilId, DateTimeOffset ocorridoEm) =>
+        Criar(TipoEventoFunil.LeadCapturado, sessaoFunilId, ocorridoEm, null);
+
+    public static EventoFunil CriarAnexoOferecido(Guid sessaoFunilId, DateTimeOffset ocorridoEm) =>
+        Criar(TipoEventoFunil.AnexoOferecido, sessaoFunilId, ocorridoEm, null);
+
     private static EventoFunil Criar(TipoEventoFunil tipo, Guid sessaoFunilId, DateTimeOffset ocorridoEm,
         Guid? simulacaoId)
     {

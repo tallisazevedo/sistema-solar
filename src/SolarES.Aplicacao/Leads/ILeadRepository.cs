@@ -15,5 +15,21 @@ public interface ILeadRepository
     void AdicionarConsentimento(ConsentimentoLgpd consentimento);
     void Adicionar(LeadEntidade lead);
     void AdicionarHistorico(HistoricoStatusLead historico);
+    Task<MetricasAnexoLandingResultado> ObterMetricasAnexoLandingAsync(DateTimeOffset de, DateTimeOffset ate,
+        CancellationToken ct);
+    Task<IReadOnlyList<ConversaoOrigemResultado>> ObterConversaoPorOrigemAsync(DateTimeOffset de,
+        DateTimeOffset ate, CancellationToken ct);
     Task SalvarAlteracoesAsync(CancellationToken ct);
+}
+
+public sealed record MetricasAnexoLandingResultado(int LeadsLanding, int LeadsComAnexo)
+{
+    public decimal PercentualComAnexo => LeadsLanding == 0
+        ? 0 : decimal.Round(LeadsComAnexo * 100m / LeadsLanding, 2);
+}
+
+public sealed record ConversaoOrigemResultado(OrigemLead Origem, int LeadsCriados, int LeadsConvertidos)
+{
+    public decimal ConversaoPercentual => LeadsCriados == 0
+        ? 0 : decimal.Round(LeadsConvertidos * 100m / LeadsCriados, 2);
 }

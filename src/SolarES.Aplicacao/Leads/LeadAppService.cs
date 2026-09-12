@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Hangfire;
 using SolarES.Aplicacao.Configuracao;
+using SolarES.Aplicacao.Metricas;
 using SolarES.Aplicacao.Propostas;
 using SolarES.Aplicacao.Simulacoes;
 using SolarES.Dominio.Configuracao;
@@ -14,12 +15,12 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
     IConfiguracaoVersaoRepository configuracoes, PropostaAppService propostas,
     EnvioPropostaAppService envios, IBackgroundJobClient jobs,
     IArmazenamentoAnexoConta armazenamentoAnexos, ConfiguracaoConsentimentos configuracaoConsentimentos,
-    TimeProvider relogio)
+    FunilAppService funil, TimeProvider relogio)
 {
     public async Task<DesfechoCapturaLead> CapturarPublicoAsync(Guid simulacaoId, string nome,
         string telefone, string email, CanalPreferido canal,
         IReadOnlyCollection<FinalidadeConsentimento> finalidadesAceitas, string versaoTexto,
-        byte[]? conteudoAnexo, CancellationToken ct)
+        byte[]? conteudoAnexo, Guid? sessaoFunilId, CancellationToken ct)
     {
         if (!configuracaoConsentimentos.VersoesTextoAceitas.Contains(versaoTexto))
             throw new ArgumentException("Versão do texto de consentimento desconhecida.");
@@ -45,6 +46,11 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
                 caminho, relogio.GetUtcNow()));
         }
         await leads.SalvarAlteracoesAsync(ct);
+        if (sessaoFunilId is { } sessao)
+        {
+            await funil.RegistrarLeadCapturadoAsync(sessao, ct);
+            if (conteudoAnexo is not null) await funil.RegistrarAnexoOferecidoAsync(sessao, ct);
+        }
 
         var versao = await configuracoes.ObterPorIdAsync(simulacao.ConfiguracaoVersaoId, ct)
             ?? throw new InvalidOperationException("Versão da configuração não encontrada.");

@@ -6,9 +6,36 @@
 </form>
 @if (metricas(); as item) {
   <section>
-    <p>Simulações iniciadas: <strong>{{ item.sessoesIniciadas }}</strong></p>
-    <p>Simulações concluídas: <strong>{{ item.sessoesConcluidas }}</strong></p>
-    <p>Taxa de conclusão: <strong>{{ item.taxaConclusaoPercentual | number: '1.0-2' }}%</strong></p>
+    <h2>Funil em etapas</h2>
+    <p>Iniciou a simulação: <strong>{{ item.sessoesIniciadas }}</strong></p>
+    <p>Concluiu a simulação: <strong>{{ item.sessoesConcluidas }}</strong></p>
+    <p>Deixou contato: <strong>{{ item.leadsCapturados }}</strong></p>
+    <p>Anexou a conta: <strong>{{ item.anexosOferecidos }}</strong></p>
+    <p>Taxa de conclusão: <strong>{{ item.taxaConclusaoPercentual | number: '1.0-2' }}%</strong>
+      ({{ item.sessoesConcluidas }} / {{ item.sessoesIniciadas }})</p>
+  </section>
+  <section>
+    <h2>Anexo da conta (landing)</h2>
+    <p>Leads com anexo: <strong>{{ item.percentualComAnexo | number: '1.0-2' }}%</strong>
+      ({{ item.leadsComAnexo }} / {{ item.leadsLanding }})</p>
+  </section>
+  <section>
+    <h2>Conversão por origem</h2>
+    <table>
+      <thead>
+        <tr><th>Origem</th><th>Convertidos</th><th>Criados</th><th>Conversão</th></tr>
+      </thead>
+      <tbody>
+        @for (origem of item.conversaoPorOrigem; track origem.origem) {
+          <tr>
+            <td>{{ origem.origem }}</td>
+            <td>{{ origem.leadsConvertidos }}</td>
+            <td>{{ origem.leadsCriados }}</td>
+            <td>{{ origem.conversaoPercentual | number: '1.0-2' }}%</td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </section>
 }
 @if (erro()) { <p role="alert">Não foi possível consultar o funil.</p> }

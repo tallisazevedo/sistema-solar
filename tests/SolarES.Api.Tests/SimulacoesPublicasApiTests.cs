@@ -367,6 +367,56 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         Assert.DoesNotContain(await contexto.Leads.ToListAsync(), lead => lead.SimulacaoId == simulacao.Id);
     }
 
+    [Fact]
+    public async Task Dada_SessaoFunilEAnexo_Quando_CapturaLead_Entao_RegistraLeadCapturadoEAnexoOferecido()
+    {
+        const string codigoIbge = "9898989";
+        await PrepararCenarioAsync(codigoIbge);
+        _cliente.DefaultRequestHeaders.Authorization = null;
+        var criar = await _cliente.PostAsJsonAsync("/api/publico/simulacoes",
+            new CriarSimulacaoPublicaRequest(500m, null, TipoLigacao.Monofasica,
+                PerfilImovel.Residencial, codigoIbge, TipoTelhado.Ceramico, 1000m, true));
+        var simulacao = await criar.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>();
+        var sessaoFunilId = Guid.NewGuid();
+        var pdf = "%PDF-1.4 conta teste"u8.ToArray();
+
+        using var formulario = FormularioLead(true, pdf, "conta.pdf", "application/pdf",
+            sessaoFunilId: sessaoFunilId);
+        var response = await _cliente.PostAsync($"/api/publico/simulacoes/{simulacao!.Id}/lead", formulario);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var escopo = _factory.Services.CreateScope();
+        var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        Assert.Single(await contexto.EventosFunil.Where(e =>
+            e.SessaoFunilId == sessaoFunilId && e.Tipo == TipoEventoFunil.LeadCapturado).ToListAsync());
+        Assert.Single(await contexto.EventosFunil.Where(e =>
+            e.SessaoFunilId == sessaoFunilId && e.Tipo == TipoEventoFunil.AnexoOferecido).ToListAsync());
+    }
+
+    [Fact]
+    public async Task Dada_SessaoFunilSemAnexo_Quando_CapturaLead_Entao_NaoRegistraAnexoOferecido()
+    {
+        const string codigoIbge = "9797979";
+        await PrepararCenarioAsync(codigoIbge);
+        _cliente.DefaultRequestHeaders.Authorization = null;
+        var criar = await _cliente.PostAsJsonAsync("/api/publico/simulacoes",
+            new CriarSimulacaoPublicaRequest(500m, null, TipoLigacao.Monofasica,
+                PerfilImovel.Residencial, codigoIbge, TipoTelhado.Ceramico, 1000m, true));
+        var simulacao = await criar.Content.ReadFromJsonAsync<SimulacaoPublicaResponse>();
+        var sessaoFunilId = Guid.NewGuid();
+
+        using var formulario = FormularioLead(true, sessaoFunilId: sessaoFunilId);
+        var response = await _cliente.PostAsync($"/api/publico/simulacoes/{simulacao!.Id}/lead", formulario);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var escopo = _factory.Services.CreateScope();
+        var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        Assert.Single(await contexto.EventosFunil.Where(e =>
+            e.SessaoFunilId == sessaoFunilId && e.Tipo == TipoEventoFunil.LeadCapturado).ToListAsync());
+        Assert.Empty(await contexto.EventosFunil.Where(e =>
+            e.SessaoFunilId == sessaoFunilId && e.Tipo == TipoEventoFunil.AnexoOferecido).ToListAsync());
+    }
+
     private static ConfiguracaoCalculo ConfiguracaoConfirmada()
     {
         var b = ConfiguracaoCalculoBaseline.Criar();
@@ -388,7 +438,7 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
 
     private static MultipartFormDataContent FormularioLead(bool consentimento, byte[]? anexo = null,
         string nomeArquivo = "conta.pdf", string tipoConteudo = "application/pdf",
-        string versaoTexto = "contato-comercial-v1")
+        string versaoTexto = "contato-comercial-v1", Guid? sessaoFunilId = null)
     {
         var formulario = new MultipartFormDataContent();
         formulario.Add(new StringContent("Maria Silva"), "Nome");
@@ -398,6 +448,8 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         if (consentimento)
             formulario.Add(new StringContent(nameof(FinalidadeConsentimento.ContatoComercial)), "FinalidadesAceitas");
         formulario.Add(new StringContent(versaoTexto), "VersaoTexto");
+        if (sessaoFunilId is { } sessao)
+            formulario.Add(new StringContent(sessao.ToString()), "SessaoFunilId");
         if (anexo is not null)
         {
             var arquivo = new ByteArrayContent(anexo);

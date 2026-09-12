@@ -3,8 +3,10 @@ using System.Net.Http.Json;
 using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using SolarES.Api.Contratos;
+using SolarES.Dominio.Lead;
 using SolarES.Dominio.Metricas;
 using SolarES.Infraestrutura.Persistencia;
+using LeadEntidade = SolarES.Dominio.Lead.Lead;
 
 namespace SolarES.Api.Tests;
 
@@ -63,5 +65,60 @@ public sealed class MetricasFunilApiTests : IClassFixture<SolarESApiFactory>
             new RegistrarEventoFunilRequest(TipoEventoFunil.SimulacaoConcluida, Guid.NewGuid()));
         Assert.Equal(HttpStatusCode.Accepted, inicio.StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, conclusao.StatusCode);
+    }
+
+    [Fact]
+    public async Task Dadas_DuasOrigens_Quando_ConsultaFunil_Entao_RetornaPercentuaisDeAnexoEConversaoPorOrigem()
+    {
+        var agora = DateTimeOffset.UtcNow;
+        using (var escopo = _factory.Services.CreateScope())
+        {
+            var banco = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+
+            var landingComAnexo = LeadEntidade.Criar("Landing Com Anexo", "27999999901", "landing1@teste.com",
+                CanalPreferido.Email, Guid.NewGuid(), Guid.NewGuid(), [FinalidadeConsentimento.ContatoComercial], agora);
+            var landingSemAnexo = LeadEntidade.Criar("Landing Sem Anexo", "27999999902", "landing2@teste.com",
+                CanalPreferido.Email, Guid.NewGuid(), Guid.NewGuid(), [FinalidadeConsentimento.ContatoComercial], agora);
+            var historicoLanding = landingComAnexo.AlterarStatus(StatusLead.EmAtendimento, null, Guid.NewGuid(), agora);
+            var historicoLandingVisita = landingComAnexo.AlterarStatus(StatusLead.VisitaTecnicaAgendada,
+                agora.AddDays(5), Guid.NewGuid(), agora);
+
+            var indicacaoConvertido = LeadEntidade.CriarManual("Indicacao Convertido", "27999999903",
+                "indicacao1@teste.com", OrigemLead.Indicacao, agora);
+            var indicacaoNovo = LeadEntidade.CriarManual("Indicacao Novo", "27999999904",
+                "indicacao2@teste.com", OrigemLead.Indicacao, agora);
+            var historicoIndicacaoAtendimento = indicacaoConvertido.AlterarStatus(StatusLead.EmAtendimento, null,
+                Guid.NewGuid(), agora);
+            var historicoIndicacaoVisita = indicacaoConvertido.AlterarStatus(StatusLead.VisitaTecnicaAgendada,
+                agora.AddDays(5), Guid.NewGuid(), agora);
+            var historicoIndicacaoConvertido = indicacaoConvertido.AlterarStatus(StatusLead.Convertido, null,
+                Guid.NewGuid(), agora);
+
+            banco.Leads.AddRange(landingComAnexo, landingSemAnexo, indicacaoConvertido, indicacaoNovo);
+            banco.HistoricosStatusLead.AddRange(historicoLanding, historicoLandingVisita,
+                historicoIndicacaoAtendimento, historicoIndicacaoVisita, historicoIndicacaoConvertido);
+            banco.AnexosConta.Add(AnexoConta.Criar(landingComAnexo.Id, TipoAnexoConta.Pdf, 10,
+                "caminho/teste.pdf", agora));
+            await banco.SaveChangesAsync();
+        }
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.DonoEmail,
+            SolarESApiFactory.DonoSenha);
+
+        var resposta = await _cliente.GetFromJsonAsync<MetricasFunilResponse>(
+            $"/api/metricas/funil?de={Uri.EscapeDataString(agora.AddHours(-1).ToString("O", CultureInfo.InvariantCulture))}&ate={Uri.EscapeDataString(agora.AddHours(1).ToString("O", CultureInfo.InvariantCulture))}");
+
+        Assert.Equal(2, resposta!.LeadsLanding);
+        Assert.Equal(1, resposta.LeadsComAnexo);
+        Assert.Equal(50m, resposta.PercentualComAnexo);
+
+        var landingConversao = resposta.ConversaoPorOrigem.Single(c => c.Origem == OrigemLead.Landing);
+        Assert.Equal(2, landingConversao.LeadsCriados);
+        Assert.Equal(1, landingConversao.LeadsConvertidos);
+        Assert.Equal(50m, landingConversao.ConversaoPercentual);
+
+        var indicacaoConversao = resposta.ConversaoPorOrigem.Single(c => c.Origem == OrigemLead.Indicacao);
+        Assert.Equal(2, indicacaoConversao.LeadsCriados);
+        Assert.Equal(1, indicacaoConversao.LeadsConvertidos);
+        Assert.Equal(50m, indicacaoConversao.ConversaoPercentual);
     }
 }

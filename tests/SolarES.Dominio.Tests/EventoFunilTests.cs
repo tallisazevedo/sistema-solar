@@ -16,4 +16,16 @@ public sealed class EventoFunilTests
         Assert.Throws<ArgumentException>(() =>
             EventoFunil.CriarConclusao(Guid.NewGuid(), Guid.Empty, DateTimeOffset.UtcNow));
     }
+
+    [Fact]
+    public void LeadCapturado_ExigeSessaoValida()
+    {
+        Assert.Throws<ArgumentException>(() => EventoFunil.CriarLeadCapturado(Guid.Empty, DateTimeOffset.UtcNow));
+    }
+
+    [Fact]
+    public void AnexoOferecido_ExigeSessaoValida()
+    {
+        Assert.Throws<ArgumentException>(() => EventoFunil.CriarAnexoOferecido(Guid.Empty, DateTimeOffset.UtcNow));
+    }
 }

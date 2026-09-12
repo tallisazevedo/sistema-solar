@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { configurarMetaSemOpenGraph } from '../metadados';
-import { MunicipioPublico, PublicoApiService } from '../publico-api.service';
+import { MunicipioPublico, obterSessaoFunilId, PublicoApiService } from '../publico-api.service';
 
 @Component({
   selector: 'app-simulador',
@@ -36,7 +36,7 @@ export class Simulador implements OnInit {
     'Nov',
     'Dez',
   ];
-  private readonly sessaoFunilId = this.obterSessaoFunilId();
+  private readonly sessaoFunilId = obterSessaoFunilId();
 
   protected get municipiosFiltrados(): MunicipioPublico[] {
     const termo = this.busca().trim().toLocaleLowerCase('pt-BR');
@@ -112,28 +112,6 @@ export class Simulador implements OnInit {
       });
   }
 
-  private obterSessaoFunilId(): string {
-    const nova = () => {
-      if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
-      const bytes = new Uint8Array(16);
-      if (globalThis.crypto?.getRandomValues) globalThis.crypto.getRandomValues(bytes);
-      else for (let indice = 0; indice < bytes.length; indice++) bytes[indice] = Math.floor(Math.random() * 256);
-      bytes[6] = (bytes[6] & 0x0f) | 0x40;
-      bytes[8] = (bytes[8] & 0x3f) | 0x80;
-      const hexadecimal = Array.from(bytes, (valor) => valor.toString(16).padStart(2, '0')).join('');
-      return `${hexadecimal.slice(0, 8)}-${hexadecimal.slice(8, 12)}-${hexadecimal.slice(12, 16)}-${hexadecimal.slice(16, 20)}-${hexadecimal.slice(20)}`;
-    };
-    try {
-      const chave = 'solares.funil.sessao';
-      const existente = sessionStorage.getItem(chave);
-      if (existente) return existente;
-      const criada = nova();
-      sessionStorage.setItem(chave, criada);
-      return criada;
-    } catch {
-      return nova();
-    }
-  }
 }
 
 export default Simulador;

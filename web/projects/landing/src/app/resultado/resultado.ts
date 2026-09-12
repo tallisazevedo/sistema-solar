@@ -2,7 +2,12 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { configurarMetaSemOpenGraph } from '../metadados';
-import { DesfechoCapturaLead, PublicoApiService, SimulacaoPublica } from '../publico-api.service';
+import {
+  DesfechoCapturaLead,
+  obterSessaoFunilId,
+  PublicoApiService,
+  SimulacaoPublica,
+} from '../publico-api.service';
 
 @Component({
   selector: 'app-resultado',
@@ -50,8 +55,10 @@ export class Resultado implements OnInit {
     if (!formulario.reportValidity()) return;
     this.enviando.set(true);
     this.erroContato.set(null);
+    const dados = new FormData(formulario);
+    dados.set('sessaoFunilId', obterSessaoFunilId());
     this.api
-      .capturarLead(this.route.snapshot.paramMap.get('id')!, new FormData(formulario))
+      .capturarLead(this.route.snapshot.paramMap.get('id')!, dados)
       .then(({ desfecho }) => this.desfecho.set(desfecho))
       .catch(() => {
         this.enviando.set(false);
