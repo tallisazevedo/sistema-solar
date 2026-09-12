@@ -179,6 +179,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 
+// Antes de tudo: uma requisicao grande demais nem chega no rate limiter, na
+// autenticacao ou no model binding.
+app.UseLimiteTamanhoRequisicaoPublica();
+
 // X-Forwarded-For so e' confiavel vindo dos proxies listados aqui -- sem essa lista, o
 // RemoteIpAddress da conexao TCP e' usado como esta' (comportamento seguro por padrao).
 var proxiesConfiaveis = builder.Configuration.GetSection("ProxiesConfiaveis").Get<string[]>() ?? [];

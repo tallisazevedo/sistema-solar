@@ -168,4 +168,68 @@ describe('Resultado', () => {
 
     expect(pagina.textContent).toContain(mensagem);
   });
+
+  it('mostra tamanho maximo e formatos aceitos quando o anexo excede o limite (413)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((_url: RequestInfo | URL, init?: RequestInit) =>
+        Promise.resolve(
+          init?.method === 'POST'
+            ? ({
+                ok: false,
+                status: 413,
+                json: () =>
+                  Promise.resolve({
+                    title: 'Anexo grande demais.',
+                    detail: 'O arquivo ultrapassa o limite de 10.0 MB. Formatos aceitos: PDF, JPG e PNG.',
+                  }),
+              } as Response)
+            : ({
+                ok: true,
+                json: () =>
+                  Promise.resolve({
+                    id: 'simulacao-4',
+                    potenciaKwp: 5,
+                    quantidadeModulos: 9,
+                    investimentoEstimado: 18000,
+                    economiaMensalAno1: 400,
+                    paybackMeses: 45,
+                    calibracaoPendente: false,
+                    coberturaPercentual: 100,
+                    kitLitoral: false,
+                    instalacaoRecomendada: true,
+                    roteadaParaHumano: false,
+                    motivoRoteamento: null,
+                    projecao: [],
+                  }),
+              } as Response),
+        ),
+      ),
+    );
+    await TestBed.configureTestingModule({
+      imports: [Resultado],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: convertToParamMap({ id: 'simulacao-4' }) } },
+        },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(Resultado);
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+    const pagina = fixture.nativeElement as HTMLElement;
+    pagina.querySelector<HTMLInputElement>('[name="Nome"]')!.value = 'Maria';
+    pagina.querySelector<HTMLInputElement>('[name="Telefone"]')!.value = '27999999999';
+    pagina.querySelector<HTMLInputElement>('[name="Email"]')!.value = 'maria@exemplo.com';
+    pagina.querySelector<HTMLInputElement>('[name="FinalidadesAceitas"]')!.checked = true;
+    pagina.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+
+    expect(pagina.textContent).toContain('10.0 MB');
+    expect(pagina.textContent).toContain('PDF, JPG e PNG');
+  });
 });

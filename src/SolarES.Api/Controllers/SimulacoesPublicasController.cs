@@ -22,7 +22,8 @@ public sealed class SimulacoesPublicasController(
     SimulacaoAppService simulacaoAppService,
     LeadAppService leadAppService,
     FunilAppService funilAppService,
-    IRepositorioCrud<MunicipioHsp> municipiosRepositorio) : ControllerBase
+    IRepositorioCrud<MunicipioHsp> municipiosRepositorio,
+    IConfiguration configuracao) : ControllerBase
 {
     [HttpPost("simulacoes/{id:guid}/lead")]
     [EnableRateLimiting(RateLimitingExtensions.PublicoLead)]
@@ -34,6 +35,26 @@ public sealed class SimulacoesPublicasController(
             byte[]? conteudoAnexo = null;
             if (request.Anexo is not null)
             {
+                var tamanhoMaximoAnexo = configuracao.GetValue<long?>("AnexosConta:TamanhoMaximoBytes") ?? 10_000_000;
+                if (request.Anexo.Length > tamanhoMaximoAnexo)
+                {
+                    // Nunca copia o conteudo pro armazenamento -- o anexo grande
+                    // demais e' recusado antes de qualquer efeito.
+                    var limiteMb = Math.Round(tamanhoMaximoAnexo / 1_000_000.0, 1);
+                    var problemDetails = new ProblemDetails
+                    {
+                        Status = StatusCodes.Status413PayloadTooLarge,
+                        Title = "Anexo grande demais.",
+                        Detail = $"O arquivo ultrapassa o limite de {limiteMb} MB. Formatos aceitos: PDF, JPG e PNG.",
+                    };
+                    problemDetails.Extensions["traceId"] = HttpContext.TraceIdentifier;
+                    return new ObjectResult(problemDetails)
+                    {
+                        StatusCode = StatusCodes.Status413PayloadTooLarge,
+                        ContentTypes = { "application/problem+json" },
+                    };
+                }
+
                 await using var memoria = new MemoryStream();
                 await request.Anexo.CopyToAsync(memoria, ct);
                 conteudoAnexo = memoria.ToArray();
