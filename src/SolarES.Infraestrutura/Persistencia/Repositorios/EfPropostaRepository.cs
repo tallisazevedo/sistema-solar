@@ -16,6 +16,14 @@ public sealed class EfPropostaRepository(SolarESDbContext contexto) : IPropostaR
         await contexto.Propostas.Where(p => status == null || p.Status == status)
             .OrderByDescending(p => p.CriadoEm).ToListAsync(ct);
 
+    public async Task<IReadOnlyList<PropostaEntidade>> ListarPendentesDeVencimentoAsync(DateTimeOffset agora,
+        CancellationToken ct) =>
+        await contexto.Propostas
+            .Where(p => p.ValidaAte < agora && p.VencimentoNotificadoEm == null &&
+                (p.Status == StatusProposta.Emitida || p.Status == StatusProposta.Vencida))
+            .OrderBy(p => p.ValidaAte)
+            .ToListAsync(ct);
+
     public void Adicionar(PropostaEntidade proposta) => contexto.Propostas.Add(proposta);
 
     public Task SalvarAlteracoesAsync(CancellationToken ct) => contexto.SaveChangesAsync(ct);

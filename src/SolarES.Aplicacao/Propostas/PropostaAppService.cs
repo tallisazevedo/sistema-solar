@@ -15,9 +15,9 @@ public sealed class PropostaAppService(
     IBackgroundJobClient jobs,
     TimeProvider relogio)
 {
-    public async Task<PropostaEntidade> GerarAsync(Guid simulacaoId, CancellationToken ct)
+    public async Task<PropostaEntidade> GerarAsync(Guid simulacaoId, Guid? responsavelUsuarioId, CancellationToken ct)
     {
-        var (proposta, _) = await GerarComJobIdAsync(simulacaoId, ct);
+        var (proposta, _) = await GerarComJobIdAsync(simulacaoId, responsavelUsuarioId, ct);
         return proposta;
     }
 
@@ -25,7 +25,8 @@ public sealed class PropostaAppService(
     /// Mesma geracao, mas devolve tambem o id do job de PDF enfileirado -- quem
     /// precisa encadear uma continuacao (T25.3: envio automatico) usa esse id.
     /// </summary>
-    public async Task<(PropostaEntidade Proposta, string JobIdGeracaoPdf)> GerarComJobIdAsync(Guid simulacaoId, CancellationToken ct)
+    public async Task<(PropostaEntidade Proposta, string JobIdGeracaoPdf)> GerarComJobIdAsync(Guid simulacaoId,
+        Guid? responsavelUsuarioId, CancellationToken ct)
     {
         var simulacao = await simulacaoRepositorio.ObterPorIdAsync(simulacaoId, ct)
             ?? throw new InvalidOperationException("Simulacao nao encontrada.");
@@ -45,6 +46,7 @@ public sealed class PropostaAppService(
             ConfiguracaoVersaoId = configuracaoVersao.Id,
             ValidaAte = validaAte,
             Status = StatusProposta.Emitida,
+            ResponsavelUsuarioId = responsavelUsuarioId,
             CriadoEm = hoje,
             AtualizadoEm = hoje,
         };

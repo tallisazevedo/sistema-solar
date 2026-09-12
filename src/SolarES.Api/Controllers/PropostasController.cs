@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using SolarES.Api.Contratos;
 using SolarES.Aplicacao.Propostas;
 using SolarES.Dominio.Proposta;
@@ -11,7 +12,8 @@ public sealed class PropostasController(PropostaAppService servico) : Controller
     [HttpPost("api/simulacoes/{simulacaoId:guid}/proposta")]
     public async Task<ActionResult<PropostaResponse>> Gerar(Guid simulacaoId, CancellationToken ct)
     {
-        var proposta = await servico.GerarAsync(simulacaoId, ct);
+        var responsavelUsuarioId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var proposta = await servico.GerarAsync(simulacaoId, responsavelUsuarioId, ct);
         var calibracaoPendente = await servico.PossuiCalibracaoPendenteAsync(proposta, ct);
         var response = PropostaResponse.DeEntidade(proposta, calibracaoPendente);
         return CreatedAtAction(nameof(ObterPdf), new { id = proposta.Id }, response);

@@ -72,6 +72,13 @@ public class PropostasApiTests : IClassFixture<SolarESApiFactory>
         Assert.NotNull(proposta);
         Assert.StartsWith("PROP-", proposta!.Numero, StringComparison.Ordinal);
         Assert.True(proposta.ValidaAte > DateTimeOffset.UtcNow);
+        using (var escopo = _factory.Services.CreateScope())
+        {
+            var banco = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+            var dono = await banco.Usuarios.SingleAsync(u => u.Email == SolarESApiFactory.DonoEmail);
+            var propostaPersistida = await banco.Propostas.SingleAsync(p => p.Id == proposta.Id);
+            Assert.Equal(dono.Id, propostaPersistida.ResponsavelUsuarioId);
+        }
 
         // T21: geracao e assincrona (job do Hangfire) -- o POST nao espera o PDF ficar
         // pronto, entao o teste espera o job rodar (Hangfire.InMemory processa em

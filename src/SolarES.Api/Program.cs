@@ -59,6 +59,7 @@ builder.Services.AddScoped<ConsultaLeadsAppService>();
 builder.Services.AddScoped<IArmazenamentoAnexoConta, ArmazenamentoAnexoContaEmDisco>();
 
 builder.Services.AddScoped<IPropostaRepository, EfPropostaRepository>();
+builder.Services.AddScoped<IDadosNotificacaoVencimentoQuery, EfDadosNotificacaoVencimentoQuery>();
 builder.Services.AddScoped<IGeradorPdfProposta, GeradorPdfProposta>();
 builder.Services.AddScoped<IArmazenamentoPdf, ArmazenamentoPdfEmDisco>();
 builder.Services.AddScoped<GerarPdfPropostaJob>();
@@ -67,13 +68,16 @@ builder.Services.AddScoped<PropostaAppService>();
 builder.Services.AddScoped<IEnvioPropostaRepository, EfEnvioPropostaRepository>();
 builder.Services.AddScoped<EnvioPropostaAppService>();
 builder.Services.AddScoped<EnviarPropostaJob>();
+builder.Services.AddScoped<VencerPropostasJob>();
 if (builder.Configuration["Email:Modo"] == "Smtp")
 {
     builder.Services.AddScoped<ICanalEnvioProposta, CanalEnvioEmailSmtp>();
+    builder.Services.AddScoped<INotificadorInterno, NotificadorInternoEmailSmtp>();
 }
 else
 {
     builder.Services.AddScoped<ICanalEnvioProposta, CanalEnvioEmailEmDisco>();
+    builder.Services.AddScoped<INotificadorInterno, NotificadorInternoEmailEmDisco>();
 }
 
 builder.Services.AddHttpClient<CanalEnvioWhatsApp>(cliente =>
@@ -118,6 +122,15 @@ builder.Services.AddExceptionHandler<ExcecaoDeValidacaoDominioHandler>();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
+
+var horarioVencimento = TimeOnly.ParseExact(
+    builder.Configuration["Jobs:VencimentoPropostas:Horario"] ?? "08:00", "HH:mm");
+var gerenciadorJobsRecorrentes = app.Services.GetRequiredService<IRecurringJobManager>();
+gerenciadorJobsRecorrentes.AddOrUpdate<VencerPropostasJob>(
+    "vencer-propostas",
+    job => job.ExecutarAsync(CancellationToken.None),
+    Cron.Daily(horarioVencimento.Hour, horarioVencimento.Minute),
+    new RecurringJobOptions { TimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo") });
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

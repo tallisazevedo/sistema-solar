@@ -13,6 +13,9 @@ public sealed class Proposta : EntidadeBase
     public DateTimeOffset? AceitaEm { get; set; }
     public DateTimeOffset? PerdidaEm { get; set; }
     public string? MotivoPerda { get; set; }
+    public DateTimeOffset? VencidaEm { get; private set; }
+    public DateTimeOffset? VencimentoNotificadoEm { get; private set; }
+    public Guid? ResponsavelUsuarioId { get; set; }
 
     /// <summary>Aceite do cliente. Recusa fora de Emitida e depois de ValidaAte -- exatamente em ValidaAte e' permitido.</summary>
     public void Aceitar(DateTimeOffset agora)
@@ -36,4 +39,28 @@ public sealed class Proposta : EntidadeBase
         MotivoPerda = motivo;
         AtualizadoEm = agora;
     }
+
+    public void Vencer(DateTimeOffset agora)
+    {
+        if (Status != StatusProposta.Emitida)
+            throw new TransicaoInvalidaException($"Proposta '{Numero}' precisa estar emitida para vencer.");
+        if (agora <= ValidaAte)
+            throw new TransicaoInvalidaException($"Proposta '{Numero}' permanece valida ate {ValidaAte:dd/MM/yyyy}.");
+
+        Status = StatusProposta.Vencida;
+        VencidaEm = agora;
+        AtualizadoEm = agora;
+    }
+
+    public void MarcarVencimentoNotificado(DateTimeOffset agora)
+    {
+        if (Status != StatusProposta.Vencida)
+            throw new TransicaoInvalidaException($"Proposta '{Numero}' precisa estar vencida para registrar a notificacao.");
+        if (VencimentoNotificadoEm is not null)
+            throw new TransicaoInvalidaException($"Vencimento da proposta '{Numero}' ja foi notificado.");
+
+        VencimentoNotificadoEm = agora;
+        AtualizadoEm = agora;
+    }
+
 }

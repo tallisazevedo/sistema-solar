@@ -50,7 +50,7 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
             ?? throw new InvalidOperationException("Versão da configuração não encontrada.");
         if (simulacao.RoteadaParaHumano) return DesfechoCapturaLead.RoteadoParaHumano;
         if (versao.Payload.PossuiPremissaProvisoria()) return DesfechoCapturaLead.CalibracaoPendente;
-        var (proposta, jobIdGeracaoPdf) = await propostas.GerarComJobIdAsync(simulacao.Id, ct);
+        var (proposta, jobIdGeracaoPdf) = await propostas.GerarComJobIdAsync(simulacao.Id, null, ct);
 
         // Envio automatico pelo canal escolhido na landing -- mesma guarda de
         // calibracao do envio manual do admin, mas o disparo em si e' uma

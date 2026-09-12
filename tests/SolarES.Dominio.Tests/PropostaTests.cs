@@ -106,4 +106,61 @@ public sealed class PropostaTests
 
         Assert.Equal(StatusProposta.Perdida, proposta.Status);
     }
+
+    [Fact]
+    public void Dada_PropostaEmitidaDepoisDaValidade_Quando_Vence_Entao_MudaParaVencidaEPreencheVencidaEm()
+    {
+        var validaAte = new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
+        var proposta = CriarEmitida(validaAte);
+        var agora = validaAte.AddSeconds(1);
+
+        proposta.Vencer(agora);
+
+        Assert.Equal(StatusProposta.Vencida, proposta.Status);
+        Assert.Equal(agora, proposta.VencidaEm);
+    }
+
+    [Fact]
+    public void Dada_PropostaEmitidaNoInstanteExatoDaValidade_Quando_Vence_Entao_Recusa()
+    {
+        var validaAte = new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
+        var proposta = CriarEmitida(validaAte);
+
+        Assert.Throws<TransicaoInvalidaException>(() => proposta.Vencer(validaAte));
+    }
+
+    [Fact]
+    public void Dada_PropostaForaDoStatusEmitida_Quando_Vence_Entao_Recusa()
+    {
+        var validaAte = new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
+        var proposta = CriarEmitida(validaAte);
+        proposta.MarcarPerdida(validaAte.AddDays(-1), null);
+
+        Assert.Throws<TransicaoInvalidaException>(() => proposta.Vencer(validaAte.AddSeconds(1)));
+    }
+
+    [Fact]
+    public void Dada_PropostaVencida_Quando_MarcaVencimentoNotificado_Entao_PreencheData()
+    {
+        var validaAte = new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
+        var proposta = CriarEmitida(validaAte);
+        var agora = validaAte.AddSeconds(1);
+        proposta.Vencer(agora);
+
+        proposta.MarcarVencimentoNotificado(agora);
+
+        Assert.Equal(agora, proposta.VencimentoNotificadoEm);
+    }
+
+    [Fact]
+    public void Dada_PropostaComVencimentoJaNotificado_Quando_MarcaNovamente_Entao_Recusa()
+    {
+        var validaAte = new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
+        var proposta = CriarEmitida(validaAte);
+        var agora = validaAte.AddSeconds(1);
+        proposta.Vencer(agora);
+        proposta.MarcarVencimentoNotificado(agora);
+
+        Assert.Throws<TransicaoInvalidaException>(() => proposta.MarcarVencimentoNotificado(agora));
+    }
 }

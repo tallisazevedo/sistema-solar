@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using SolarES.Dominio.Identidade;
 using PropostaEntidade = SolarES.Dominio.Proposta.Proposta;
 
 namespace SolarES.Infraestrutura.Persistencia.Configuracoes;
@@ -13,5 +14,10 @@ public sealed class PropostaConfiguration : IEntityTypeConfiguration<PropostaEnt
 
         builder.HasIndex(p => p.Numero).IsUnique();
         builder.HasIndex(p => p.ValidaAte);
+        builder.HasIndex(p => p.ResponsavelUsuarioId);
+        builder.HasOne<Usuario>()
+            .WithMany()
+            .HasForeignKey(p => p.ResponsavelUsuarioId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
