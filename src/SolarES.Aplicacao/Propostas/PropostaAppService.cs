@@ -48,6 +48,30 @@ public sealed class PropostaAppService(
         return proposta;
     }
 
+    public Task<IReadOnlyList<PropostaEntidade>> ListarAsync(StatusProposta? status, CancellationToken ct) =>
+        propostaRepositorio.ListarAsync(status, ct);
+
+    public Task<PropostaEntidade?> ObterAsync(Guid id, CancellationToken ct) =>
+        propostaRepositorio.ObterPorIdAsync(id, ct);
+
+    public async Task<bool> AceitarAsync(Guid id, CancellationToken ct)
+    {
+        var proposta = await propostaRepositorio.ObterPorIdAsync(id, ct);
+        if (proposta is null) return false;
+        proposta.Aceitar(relogio.GetUtcNow());
+        await propostaRepositorio.SalvarAlteracoesAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> MarcarPerdidaAsync(Guid id, string? motivo, CancellationToken ct)
+    {
+        var proposta = await propostaRepositorio.ObterPorIdAsync(id, ct);
+        if (proposta is null) return false;
+        proposta.MarcarPerdida(relogio.GetUtcNow(), motivo);
+        await propostaRepositorio.SalvarAlteracoesAsync(ct);
+        return true;
+    }
+
     public async Task<(byte[] ConteudoPdf, string Numero)> ObterPdfAsync(Guid propostaId, CancellationToken ct)
     {
         var proposta = await propostaRepositorio.ObterPorIdAsync(propostaId, ct)

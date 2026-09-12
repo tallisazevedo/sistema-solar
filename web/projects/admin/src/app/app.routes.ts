@@ -17,6 +17,8 @@ import { ListaSimulacoes } from './simulacoes/lista/lista-simulacoes';
 import { NovaSimulacao } from './simulacoes/nova/nova-simulacao';
 import { ListaLeads } from './leads/lista/lista-leads';
 import { DetalheLead } from './leads/detalhe/detalhe-lead';
+import { ListaPropostas } from './propostas/lista/lista-propostas';
+import { DetalheProposta } from './propostas/detalhe/detalhe-proposta';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -67,6 +69,8 @@ export const routes: Routes = [
       { path: 'simulacoes/nova', component: NovaSimulacao },
       { path: 'leads', component: ListaLeads },
       { path: 'leads/:id', component: DetalheLead },
+      { path: 'propostas', component: ListaPropostas },
+      { path: 'propostas/:id', component: DetalheProposta },
     ],
   },
 ];

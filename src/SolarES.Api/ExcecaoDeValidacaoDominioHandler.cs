@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using SolarES.Aplicacao.Propostas;
+using SolarES.Dominio;
 
 namespace SolarES.Api;
 
@@ -23,6 +24,21 @@ public sealed class ExcecaoDeValidacaoDominioHandler : IExceptionHandler
                 Status = StatusCodes.Status404NotFound,
                 Title = "PDF ainda nao disponivel.",
                 Detail = aindaNaoGerada.Message,
+            }, cancellationToken);
+
+            return true;
+        }
+
+        // Entrada valida, mas o estado atual do agregado recusa a operacao (proposta
+        // vencida, status terminal, calibracao pendente) -- 409, nao 400.
+        if (exception is TransicaoInvalidaException conflito)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+            await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflito de estado.",
+                Detail = conflito.Message,
             }, cancellationToken);
 
             return true;

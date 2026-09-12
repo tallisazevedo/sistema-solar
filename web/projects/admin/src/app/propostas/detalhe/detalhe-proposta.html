@@ -1,0 +1,39 @@
+<a routerLink="/propostas">← Voltar às propostas</a>
+@if (proposta(); as item) {
+  <h1>{{ item.numero }}</h1>
+  <p>Status: {{ item.status }}</p>
+  <p>Válida até: {{ item.validaAte | date: 'dd/MM/yyyy' }}</p>
+  @if (item.enviadaEm) {
+    <p>Enviada em {{ item.enviadaEm | date: 'dd/MM/yyyy HH:mm' }} por {{ item.canal }}</p>
+  }
+  @if (item.aceitaEm) {
+    <p class="aviso">Aceita em {{ item.aceitaEm | date: 'dd/MM/yyyy HH:mm' }}</p>
+  }
+  @if (item.perdidaEm) {
+    <p class="aviso">
+      Perdida em {{ item.perdidaEm | date: 'dd/MM/yyyy HH:mm' }}
+      @if (item.motivoPerda) {
+        — {{ item.motivoPerda }}
+      }
+    </p>
+  }
+  @if (item.status === 'Emitida' || item.status === 'Vencida') {
+    <section>
+      <h2>Ações</h2>
+      <button type="button" (click)="aceitar()">Registrar aceite</button>
+      <label>
+        Motivo da perda (opcional)
+        <input
+          [value]="motivoPerda()"
+          (input)="motivoPerda.set($any($event.target).value)"
+        />
+      </label>
+      <button type="button" (click)="marcarPerdida()">Marcar como perdida</button>
+      @if (erroAcao()) {
+        <p class="erro" role="alert">{{ erroAcao() }}</p>
+      }
+    </section>
+  }
+} @else if (erro()) {
+  <h1>Proposta não encontrada</h1>
+}
