@@ -14,6 +14,7 @@ using SolarES.Aplicacao.Simulacoes;
 using SolarES.Aplicacao.Leads;
 using SolarES.Infraestrutura.Identidade;
 using SolarES.Infraestrutura.Anexos;
+using SolarES.Infraestrutura.Envios;
 using SolarES.Infraestrutura.Pdf;
 using SolarES.Infraestrutura.Persistencia;
 using SolarES.Infraestrutura.Persistencia.Repositorios;
@@ -62,6 +63,18 @@ builder.Services.AddScoped<IGeradorPdfProposta, GeradorPdfProposta>();
 builder.Services.AddScoped<IArmazenamentoPdf, ArmazenamentoPdfEmDisco>();
 builder.Services.AddScoped<GerarPdfPropostaJob>();
 builder.Services.AddScoped<PropostaAppService>();
+
+builder.Services.AddScoped<IEnvioPropostaRepository, EfEnvioPropostaRepository>();
+builder.Services.AddScoped<EnvioPropostaAppService>();
+builder.Services.AddScoped<EnviarPropostaJob>();
+if (builder.Configuration["Email:Modo"] == "Smtp")
+{
+    builder.Services.AddScoped<ICanalEnvioProposta, CanalEnvioEmailSmtp>();
+}
+else
+{
+    builder.Services.AddScoped<ICanalEnvioProposta, CanalEnvioEmailEmDisco>();
+}
 
 builder.Services.AddHangfire(cfg => cfg
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)

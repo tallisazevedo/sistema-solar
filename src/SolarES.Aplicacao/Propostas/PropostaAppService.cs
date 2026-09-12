@@ -1,6 +1,7 @@
 using Hangfire;
 using SolarES.Aplicacao.Configuracao;
 using SolarES.Aplicacao.Simulacoes;
+using SolarES.Dominio.Configuracao;
 using SolarES.Dominio.Proposta;
 using PropostaEntidade = SolarES.Dominio.Proposta.Proposta;
 
@@ -53,6 +54,13 @@ public sealed class PropostaAppService(
 
     public Task<PropostaEntidade?> ObterAsync(Guid id, CancellationToken ct) =>
         propostaRepositorio.ObterPorIdAsync(id, ct);
+
+    public async Task<bool> PossuiCalibracaoPendenteAsync(PropostaEntidade proposta, CancellationToken ct)
+    {
+        var versao = await configuracaoRepositorio.ObterPorIdAsync(proposta.ConfiguracaoVersaoId, ct)
+            ?? throw new InvalidOperationException("Versão de configuração da proposta não encontrada.");
+        return versao.Payload.PossuiPremissaProvisoria();
+    }
 
     public async Task<bool> AceitarAsync(Guid id, CancellationToken ct)
     {

@@ -34,6 +34,49 @@
       }
     </section>
   }
+  <section>
+    <h2>Envio</h2>
+    @if (item.calibracaoPendente) {
+      <p class="aviso">
+        Proposta em calibração (premissa provisória) — não pode ser enviada ao cliente
+        até a validação com a empresa.
+      </p>
+    }
+    <label>
+      Canal
+      <select [disabled]="item.calibracaoPendente" (change)="alterarCanal($any($event.target).value)">
+        <option value="Email">E-mail</option>
+        <option value="Whatsapp">WhatsApp</option>
+      </select>
+    </label>
+    <label>
+      Destino
+      <input
+        [value]="destinoEnvio()"
+        [disabled]="item.calibracaoPendente"
+        (input)="destinoEnvio.set($any($event.target).value)"
+      />
+    </label>
+    <button type="button" [disabled]="item.calibracaoPendente" (click)="solicitarEnvio()">Enviar proposta</button>
+    @if (erroEnvio()) {
+      <p class="erro" role="alert">{{ erroEnvio() }}</p>
+    }
+    <h3>Histórico</h3>
+    @for (envio of envios(); track envio.id) {
+      <p>
+        {{ envio.canal }} → {{ envio.destino }} — {{ envio.status }}
+        ({{ envio.criadoEm | date: 'dd/MM/yyyy HH:mm' }})
+        @if (envio.ultimoErro) {
+          <span class="erro"> — {{ envio.ultimoErro }}</span>
+        }
+        @if (envio.status === 'Falhou') {
+          <button type="button" (click)="reenviar(envio.id)">Reenviar</button>
+        }
+      </p>
+    } @empty {
+      <p>Nenhum envio registrado.</p>
+    }
+  </section>
 } @else if (erro()) {
   <h1>Proposta não encontrada</h1>
 }

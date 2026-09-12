@@ -6,6 +6,8 @@ import { ApiConfiguration } from 'shared';
 export type StatusProposta = 'Emitida' | 'Vencida' | 'Aceita' | 'Perdida';
 export type CanalEnvio = 'Email' | 'Whatsapp';
 
+export type StatusEnvioProposta = 'Pendente' | 'Enviado' | 'Falhou' | 'Entregue';
+
 export interface PropostaAdmin {
   id: string;
   simulacaoId: string;
@@ -17,6 +19,21 @@ export interface PropostaAdmin {
   aceitaEm: string | null;
   perdidaEm: string | null;
   motivoPerda: string | null;
+  calibracaoPendente: boolean;
+}
+
+export interface EnvioPropostaAdmin {
+  id: string;
+  propostaId: string;
+  canal: CanalEnvio;
+  destino: string;
+  status: StatusEnvioProposta;
+  idMensagemProvedor: string | null;
+  tentativas: number;
+  ultimoErro: string | null;
+  enviadoEm: string | null;
+  entregueEm: string | null;
+  criadoEm: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -39,5 +56,17 @@ export class PropostasService {
 
   marcarPerdida(id: string, motivo: string | null): Observable<void> {
     return this.http.post<void>(`${this.api.rootUrl}/api/propostas/${id}/perda`, { motivo });
+  }
+
+  listarEnvios(propostaId: string): Observable<EnvioPropostaAdmin[]> {
+    return this.http.get<EnvioPropostaAdmin[]>(`${this.api.rootUrl}/api/propostas/${propostaId}/envios`);
+  }
+
+  solicitarEnvio(propostaId: string, canal: CanalEnvio, destino: string): Observable<EnvioPropostaAdmin> {
+    return this.http.post<EnvioPropostaAdmin>(`${this.api.rootUrl}/api/propostas/${propostaId}/envios`, { canal, destino });
+  }
+
+  reenviar(propostaId: string, envioId: string): Observable<void> {
+    return this.http.post<void>(`${this.api.rootUrl}/api/propostas/${propostaId}/envios/${envioId}/reenvio`, null);
   }
 }

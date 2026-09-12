@@ -12,19 +12,29 @@ public sealed class PropostasController(PropostaAppService servico) : Controller
     public async Task<ActionResult<PropostaResponse>> Gerar(Guid simulacaoId, CancellationToken ct)
     {
         var proposta = await servico.GerarAsync(simulacaoId, ct);
-        var response = PropostaResponse.DeEntidade(proposta);
+        var calibracaoPendente = await servico.PossuiCalibracaoPendenteAsync(proposta, ct);
+        var response = PropostaResponse.DeEntidade(proposta, calibracaoPendente);
         return CreatedAtAction(nameof(ObterPdf), new { id = proposta.Id }, response);
     }
 
     [HttpGet("api/propostas")]
-    public async Task<ActionResult<IReadOnlyList<PropostaResponse>>> Listar([FromQuery] StatusProposta? status, CancellationToken ct) =>
-        Ok((await servico.ListarAsync(status, ct)).Select(PropostaResponse.DeEntidade));
+    public async Task<ActionResult<IReadOnlyList<PropostaResponse>>> Listar([FromQuery] StatusProposta? status, CancellationToken ct)
+    {
+        var propostas = await servico.ListarAsync(status, ct);
+        var respostas = new List<PropostaResponse>(propostas.Count);
+        foreach (var proposta in propostas)
+        {
+            respostas.Add(PropostaResponse.DeEntidade(proposta, await servico.PossuiCalibracaoPendenteAsync(proposta, ct)));
+        }
+        return Ok(respostas);
+    }
 
     [HttpGet("api/propostas/{id:guid}")]
     public async Task<ActionResult<PropostaResponse>> Obter(Guid id, CancellationToken ct)
     {
         var proposta = await servico.ObterAsync(id, ct);
-        return proposta is null ? NotFound() : Ok(PropostaResponse.DeEntidade(proposta));
+        if (proposta is null) return NotFound();
+        return Ok(PropostaResponse.DeEntidade(proposta, await servico.PossuiCalibracaoPendenteAsync(proposta, ct)));
     }
 
     [HttpGet("api/propostas/{id:guid}/pdf")]
