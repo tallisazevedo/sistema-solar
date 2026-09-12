@@ -1,19 +1,26 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using SolarES.Api.Contratos;
 using SolarES.Dominio.Catalogo;
 using SolarES.Dominio.Configuracao;
+using SolarES.Dominio.Proposta;
 using SolarES.Dominio.Simulacao;
 using SolarES.Dominio.Tarifas;
+using SolarES.Infraestrutura.Persistencia;
+using PropostaEntidade = SolarES.Dominio.Proposta.Proposta;
 
 namespace SolarES.Api.Tests;
 
 public class PropostasApiTests : IClassFixture<SolarESApiFactory>
 {
+    private readonly SolarESApiFactory _factory;
     private readonly HttpClient _cliente;
 
     public PropostasApiTests(SolarESApiFactory factory)
     {
+        _factory = factory;
         _cliente = factory.CreateClient();
     }
 
@@ -65,6 +72,13 @@ public class PropostasApiTests : IClassFixture<SolarESApiFactory>
         Assert.NotNull(proposta);
         Assert.StartsWith("PROP-", proposta!.Numero, StringComparison.Ordinal);
         Assert.True(proposta.ValidaAte > DateTimeOffset.UtcNow);
+        using (var escopo = _factory.Services.CreateScope())
+        {
+            var banco = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+            var dono = await banco.Usuarios.SingleAsync(u => u.Email == SolarESApiFactory.DonoEmail);
+            var propostaPersistida = await banco.Propostas.SingleAsync(p => p.Id == proposta.Id);
+            Assert.Equal(dono.Id, propostaPersistida.ResponsavelUsuarioId);
+        }
 
         // T21: geracao e assincrona (job do Hangfire) -- o POST nao espera o PDF ficar
         // pronto, entao o teste espera o job rodar (Hangfire.InMemory processa em
@@ -88,5 +102,132 @@ public class PropostasApiTests : IClassFixture<SolarESApiFactory>
         var pdfBytes = await pdfResponse.Content.ReadAsByteArrayAsync();
         Assert.True(pdfBytes.Length > 0);
         Assert.Equal("%PDF"u8.ToArray(), pdfBytes.Take(4).ToArray());
+    }
+
+    [Fact]
+    public async Task Dado_Anonimo_Quando_ListaOuAceitaOuPerde_Entao_RetornaNaoAutorizado()
+    {
+        var id = await PrepararPropostaAsync(StatusProposta.Emitida, DateTimeOffset.UtcNow.AddDays(10));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _cliente.GetAsync("/api/propostas")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _cliente.PostAsync($"/api/propostas/{id}/aceite", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _cliente.PostAsync($"/api/propostas/{id}/perda", null)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Dado_Vendedor_Quando_ListaComFiltro_Entao_RetornaSomenteOStatusFiltrado()
+    {
+        await PrepararPropostaAsync(StatusProposta.Emitida, DateTimeOffset.UtcNow.AddDays(10));
+        await PrepararPropostaAsync(StatusProposta.Aceita, DateTimeOffset.UtcNow.AddDays(-5));
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.VendedorEmail, SolarESApiFactory.VendedorSenha);
+
+        var emitidas = await _cliente.GetFromJsonAsync<List<PropostaResponse>>("/api/propostas?status=Emitida");
+
+        Assert.NotEmpty(emitidas!);
+        Assert.All(emitidas!, p => Assert.Equal(StatusProposta.Emitida, p.Status));
+    }
+
+    [Fact]
+    public async Task Dado_PropostaEmitidaDentroDoPrazo_Quando_Aceita_Entao_RetornaSemConteudo()
+    {
+        var id = await PrepararPropostaAsync(StatusProposta.Emitida, DateTimeOffset.UtcNow.AddDays(10));
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.VendedorEmail, SolarESApiFactory.VendedorSenha);
+
+        var resposta = await _cliente.PostAsync($"/api/propostas/{id}/aceite", null);
+
+        Assert.Equal(HttpStatusCode.NoContent, resposta.StatusCode);
+        using var escopo = _factory.Services.CreateScope();
+        var banco = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        var proposta = await banco.Propostas.SingleAsync(p => p.Id == id);
+        Assert.Equal(StatusProposta.Aceita, proposta.Status);
+        Assert.NotNull(proposta.AceitaEm);
+    }
+
+    [Fact]
+    public async Task Dado_PropostaVencida_Quando_Aceita_Entao_RetornaConflito()
+    {
+        var id = await PrepararPropostaAsync(StatusProposta.Emitida, DateTimeOffset.UtcNow.AddDays(-1));
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.VendedorEmail, SolarESApiFactory.VendedorSenha);
+
+        var resposta = await _cliente.PostAsync($"/api/propostas/{id}/aceite", null);
+
+        Assert.Equal(HttpStatusCode.Conflict, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task Dado_PropostaEmitida_Quando_MarcaPerdidaComMotivo_Entao_PersisteMotivo()
+    {
+        var id = await PrepararPropostaAsync(StatusProposta.Emitida, DateTimeOffset.UtcNow.AddDays(10));
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.VendedorEmail, SolarESApiFactory.VendedorSenha);
+
+        var resposta = await _cliente.PostAsJsonAsync($"/api/propostas/{id}/perda", new MarcarPerdidaRequest("Cliente desistiu."));
+
+        Assert.Equal(HttpStatusCode.NoContent, resposta.StatusCode);
+        using var escopo = _factory.Services.CreateScope();
+        var banco = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        var proposta = await banco.Propostas.SingleAsync(p => p.Id == id);
+        Assert.Equal(StatusProposta.Perdida, proposta.Status);
+        Assert.Equal("Cliente desistiu.", proposta.MotivoPerda);
+    }
+
+    [Fact]
+    public async Task Dado_PropostaJaAceita_Quando_MarcaPerdida_Entao_RetornaConflito()
+    {
+        var id = await PrepararPropostaAsync(StatusProposta.Aceita, DateTimeOffset.UtcNow.AddDays(10));
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.VendedorEmail, SolarESApiFactory.VendedorSenha);
+
+        var resposta = await _cliente.PostAsync($"/api/propostas/{id}/perda", null);
+
+        Assert.Equal(HttpStatusCode.Conflict, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task Dada_PropostaNaoVencida_Quando_Renova_Entao_RetornaConflito()
+    {
+        var id = await PrepararPropostaAsync(StatusProposta.Emitida, DateTimeOffset.UtcNow.AddDays(10));
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.VendedorEmail,
+            SolarESApiFactory.VendedorSenha);
+
+        var resposta = await _cliente.PostAsync($"/api/propostas/{id}/renovacao", null);
+
+        Assert.Equal(HttpStatusCode.Conflict, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task Dado_PropostaInexistente_Quando_AceitaOuPerde_Entao_RetornaNaoEncontrado()
+    {
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.VendedorEmail, SolarESApiFactory.VendedorSenha);
+        var idInexistente = Guid.NewGuid();
+
+        Assert.Equal(HttpStatusCode.NotFound, (await _cliente.PostAsync($"/api/propostas/{idInexistente}/aceite", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _cliente.PostAsync($"/api/propostas/{idInexistente}/perda", null)).StatusCode);
+    }
+
+    private async Task<Guid> PrepararPropostaAsync(StatusProposta status, DateTimeOffset validaAte)
+    {
+        using var escopo = _factory.Services.CreateScope();
+        var banco = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        var versao = await banco.ConfiguracoesVersao.FirstOrDefaultAsync(c => c.Status == StatusConfiguracaoVersao.Publicada);
+        if (versao is null)
+        {
+            versao = ConfiguracaoVersao.CriarRascunho(1, ConfiguracaoCalculoBaseline.Criar());
+            versao.Publicar(Guid.NewGuid(), DateTimeOffset.UtcNow);
+            banco.Add(versao);
+        }
+        var agora = DateTimeOffset.UtcNow;
+        var proposta = new PropostaEntidade
+        {
+            Id = Guid.NewGuid(),
+            SimulacaoId = Guid.NewGuid(),
+            Numero = $"PROP-TESTE-{Guid.NewGuid():N}",
+            ConfiguracaoVersaoId = versao.Id,
+            ValidaAte = validaAte,
+            Status = status,
+            CriadoEm = agora,
+            AtualizadoEm = agora,
+        };
+        banco.Propostas.Add(proposta);
+        await banco.SaveChangesAsync();
+        return proposta.Id;
     }
 }

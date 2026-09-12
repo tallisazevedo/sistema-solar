@@ -77,6 +77,8 @@ public static class MotorSimulacao
             financeiro?.Vpl ?? 0m,
             roteada,
             motivoRoteamento,
+            kitLitoral,
+            cobertura.QuantidadeModulosFinal > 0,
             projecao);
     }
 }

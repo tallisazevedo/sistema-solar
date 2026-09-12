@@ -1,0 +1,85 @@
+<a routerLink="/propostas">← Voltar às propostas</a>
+@if (proposta(); as item) {
+  <h1>{{ item.numero }}</h1>
+  <p>Status: {{ item.status }}</p>
+  <p>Válida até: {{ item.validaAte | date: 'dd/MM/yyyy' }}</p>
+  @if (item.enviadaEm) {
+    <p>Enviada em {{ item.enviadaEm | date: 'dd/MM/yyyy HH:mm' }} por {{ item.canal }}</p>
+  }
+  @if (item.aceitaEm) {
+    <p class="aviso">Aceita em {{ item.aceitaEm | date: 'dd/MM/yyyy HH:mm' }}</p>
+  }
+  @if (item.perdidaEm) {
+    <p class="aviso">
+      Perdida em {{ item.perdidaEm | date: 'dd/MM/yyyy HH:mm' }}
+      @if (item.motivoPerda) {
+        — {{ item.motivoPerda }}
+      }
+    </p>
+  }
+  @if (item.status === 'Emitida' || item.status === 'Vencida') {
+    <section>
+      <h2>Ações</h2>
+      <button type="button" (click)="aceitar()">Registrar aceite</button>
+      <label>
+        Motivo da perda (opcional)
+        <input
+          [value]="motivoPerda()"
+          (input)="motivoPerda.set($any($event.target).value)"
+        />
+      </label>
+      <button type="button" (click)="marcarPerdida()">Marcar como perdida</button>
+      @if (item.status === 'Vencida') {
+        <button type="button" (click)="renovar()">Renovar proposta</button>
+      }
+      @if (erroAcao()) {
+        <p class="erro" role="alert">{{ erroAcao() }}</p>
+      }
+    </section>
+  }
+  <section>
+    <h2>Envio</h2>
+    @if (item.calibracaoPendente) {
+      <p class="aviso">
+        Proposta em calibração (premissa provisória) — não pode ser enviada ao cliente
+        até a validação com a empresa.
+      </p>
+    }
+    <label>
+      Canal
+      <select [disabled]="item.calibracaoPendente" (change)="alterarCanal($any($event.target).value)">
+        <option value="Email">E-mail</option>
+        <option value="Whatsapp">WhatsApp</option>
+      </select>
+    </label>
+    <label>
+      Destino
+      <input
+        [value]="destinoEnvio()"
+        [disabled]="item.calibracaoPendente"
+        (input)="destinoEnvio.set($any($event.target).value)"
+      />
+    </label>
+    <button type="button" [disabled]="item.calibracaoPendente" (click)="solicitarEnvio()">Enviar proposta</button>
+    @if (erroEnvio()) {
+      <p class="erro" role="alert">{{ erroEnvio() }}</p>
+    }
+    <h3>Histórico</h3>
+    @for (envio of envios(); track envio.id) {
+      <p>
+        {{ envio.canal }} → {{ envio.destino }} — {{ envio.status }}
+        ({{ envio.criadoEm | date: 'dd/MM/yyyy HH:mm' }})
+        @if (envio.ultimoErro) {
+          <span class="erro"> — {{ envio.ultimoErro }}</span>
+        }
+        @if (envio.status === 'Falhou') {
+          <button type="button" (click)="reenviar(envio.id)">Reenviar</button>
+        }
+      </p>
+    } @empty {
+      <p>Nenhum envio registrado.</p>
+    }
+  </section>
+} @else if (erro()) {
+  <h1>Proposta não encontrada</h1>
+}

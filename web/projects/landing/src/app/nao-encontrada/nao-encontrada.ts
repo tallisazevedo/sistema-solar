@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Meta } from '@angular/platform-browser';
+import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -53,7 +53,8 @@ import { RouterLink } from '@angular/router';
   `,
 })
 export class NaoEncontrada {
-  constructor(meta: Meta) {
+  constructor(meta: Meta, title: Title) {
+    title.setTitle('Página não encontrada | SolarES');
     meta.updateTag({ name: 'description', content: 'O endereço informado não foi encontrado.' });
     removerOpenGraph(meta);
   }
@@ -64,3 +65,5 @@ function removerOpenGraph(meta: Meta): void {
     meta.removeTag(`property="${property}"`);
   }
 }
+
+export default NaoEncontrada;

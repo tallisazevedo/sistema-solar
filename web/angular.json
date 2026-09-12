@@ -85,7 +85,6 @@
                 "input": "projects/landing/public"
               }
             ],
-            "styles": ["projects/landing/src/styles.css"],
             "server": "projects/landing/src/main.server.ts",
             "outputMode": "server",
             "security": {

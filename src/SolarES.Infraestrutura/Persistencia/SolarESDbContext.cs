@@ -5,6 +5,9 @@ using SolarES.Dominio.Conta;
 using SolarES.Dominio.Identidade;
 using SolarES.Dominio.Precificacao;
 using SolarES.Dominio.Tarifas;
+using SolarES.Dominio.Lead;
+using SolarES.Dominio.Metricas;
+using SolarES.Dominio.Proposta;
 using PropostaEntidade = SolarES.Dominio.Proposta.Proposta;
 using SimulacaoEntidade = SolarES.Dominio.Simulacao.Simulacao;
 using LeadEntidade = SolarES.Dominio.Lead.Lead;
@@ -22,10 +25,15 @@ public sealed class SolarESDbContext(DbContextOptions<SolarESDbContext> options)
     public DbSet<TarifaVigente> TarifasVigentes => Set<TarifaVigente>();
     public DbSet<MunicipioHsp> MunicipiosHsp => Set<MunicipioHsp>();
     public DbSet<LeadEntidade> Leads => Set<LeadEntidade>();
+    public DbSet<AnexoConta> AnexosConta => Set<AnexoConta>();
+    public DbSet<ConsentimentoLgpd> ConsentimentosLgpd => Set<ConsentimentoLgpd>();
     public DbSet<ContaExtraida> ContasExtraidas => Set<ContaExtraida>();
     public DbSet<SimulacaoEntidade> Simulacoes => Set<SimulacaoEntidade>();
     public DbSet<PropostaEntidade> Propostas => Set<PropostaEntidade>();
+    public DbSet<EnvioProposta> EnviosProposta => Set<EnvioProposta>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<HistoricoStatusLead> HistoricosStatusLead => Set<HistoricoStatusLead>();
+    public DbSet<EventoFunil> EventosFunil => Set<EventoFunil>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

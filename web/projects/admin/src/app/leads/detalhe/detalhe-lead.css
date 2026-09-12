@@ -1,0 +1,10 @@
+section {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: white;
+}
+.aviso {
+  padding: 1rem;
+  background: #fff0c7;
+  border-left: 0.3rem solid #b85b19;
+}

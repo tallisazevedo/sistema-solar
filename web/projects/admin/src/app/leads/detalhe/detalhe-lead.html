@@ -1,0 +1,53 @@
+<a routerLink="/leads">← Voltar aos leads</a>
+@if (lead(); as item) {
+  <h1>{{ item.nome }}</h1>
+  <section>
+    <h2>Contato</h2>
+    <p>{{ item.telefone }}</p>
+    <p>{{ item.email }}</p>
+    <p>Canal preferido: {{ canal(item.canalPreferido) }}</p>
+  </section>
+  <section>
+    <h2>Status</h2>
+    <p>{{ item.status }}</p>
+    @if (item.status === 0) { <button type="button" (click)="alterarStatus(1)">Iniciar atendimento</button> }
+    @if (item.status === 1) {
+      <label>Data da visita <input #visita type="datetime-local" /></label>
+      <button type="button" (click)="alterarStatus(2, visita.value)">Agendar visita</button>
+    }
+    @if (item.status === 2) { <button type="button" (click)="alterarStatus(3)">Marcar convertido</button> }
+    @if (item.status < 3) { <button type="button" (click)="alterarStatus(4)">Marcar perdido</button> }
+    @if (erroAcao()) { <p role="alert">{{ erroAcao() }}</p> }
+  </section>
+  @if (item.resultado) {
+  <section>
+    <h2>Simulação</h2>
+    <p>Potência: {{ item.resultado.potenciaInstaladaKwp | number: '1.2-2' }} kWp</p>
+    <p>Módulos: {{ item.resultado.quantidadeModulos }}</p>
+    <p>Investimento: {{ item.resultado.capex | currency: 'BRL' }}</p>
+    <p>Economia mensal: {{ item.resultado.economiaMensalAno1 | currency: 'BRL' }}</p>
+  </section>
+  }
+  @if (item.possuiAnexo) {
+    <button type="button" (click)="baixarAnexo()">Baixar conta anexada</button>
+  }
+  <section>
+    <h2>Consentimentos</h2>
+    @for (consentimento of item.consentimentos; track consentimento.finalidade) {
+      <p>
+        Contato comercial — versão {{ consentimento.versaoTexto }} —
+        {{ consentimento.concedidoEm | date: 'dd/MM/yyyy HH:mm' }}
+      </p>
+    } @empty {
+      <p>Nenhum consentimento registrado.</p>
+    }
+  </section>
+  @if (item.roteadoParaHumano) {
+    <p class="aviso">Avaliação de engenharia necessária.</p>
+  }
+  @if (item.calibracaoPendente) {
+    <p class="aviso">Calibração pendente — proposta não emitida.</p>
+  }
+} @else if (erro()) {
+  <h1>Lead não encontrado</h1>
+}

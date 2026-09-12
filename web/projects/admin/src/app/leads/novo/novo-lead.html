@@ -1,0 +1,10 @@
+<h1>Cadastrar lead</h1>
+<form (submit)="criar($event)">
+  <label>Nome <input name="nome" required /></label>
+  <label>Telefone <input name="telefone" required /></label>
+  <label>E-mail <input name="email" type="email" required /></label>
+  <label>Origem <select name="origem"><option value="1">Indicação</option><option value="2">Telefone</option><option value="3">Rede social</option><option value="4">Outro</option></select></label>
+  <label><input name="consentimento" type="checkbox" required /> Declaro que o titular consentiu com o contato comercial.</label>
+  <button type="submit">Cadastrar</button>
+  @if (erro()) { <p role="alert">{{ erro() }}</p> }
+</form>

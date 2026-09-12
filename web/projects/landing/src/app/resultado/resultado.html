@@ -1,0 +1,131 @@
+<header><a routerLink="/">☀ SolarES</a></header>
+<main>
+  @if (resultado(); as simulacao) {
+    <p class="etapa">Sua estimativa preliminar</p>
+    @if (simulacao.roteadaParaHumano) {
+      <h1>Vamos avaliar seu projeto com você</h1>
+      <p class="aviso">
+        {{ simulacao.motivoRoteamento || 'Este cenário precisa de uma análise personalizada.' }}
+      </p>
+      <a class="contato" href="mailto:contato@solares.com.br">Falar com um especialista</a>
+    } @else {
+      <h1>
+        {{
+          simulacao.instalacaoRecomendada
+            ? 'Seu imóvel tem potencial para economizar'
+            : 'Instalação não recomendada'
+        }}
+      </h1>
+      @if (!simulacao.instalacaoRecomendada) {
+        <p class="aviso">
+          Seu consumo está abaixo do mínimo compensável para o tipo de ligação informado.
+        </p>
+      }
+      <section aria-label="Resumo da simulação">
+        <article>
+          <span>Potência</span><strong>{{ formatarNumero(simulacao.potenciaKwp!) }} kWp</strong>
+        </article>
+        <article>
+          <span>Módulos</span><strong>{{ simulacao.quantidadeModulos }}</strong>
+        </article>
+        <article>
+          <span>Investimento estimado</span
+          ><strong>{{ formatarMoeda(simulacao.investimentoEstimado!) }}</strong>
+        </article>
+        <article>
+          <span>Economia mensal no 1º ano</span
+          ><strong>{{ formatarMoeda(simulacao.economiaMensalAno1!) }}</strong>
+        </article>
+        <article>
+          <span>Retorno estimado</span
+          ><strong>{{
+            simulacao.paybackMeses
+              ? formatarNumero(simulacao.paybackMeses / 12, 1) + ' anos'
+              : 'A avaliar'
+          }}</strong>
+        </article>
+      </section>
+      @if (simulacao.coberturaPercentual !== null && simulacao.coberturaPercentual < 100) {
+        <p class="aviso">
+          A área informada permite atender {{ formatarNumero(simulacao.coberturaPercentual, 0) }}%
+          do sistema ideal.
+        </p>
+      }
+      @if (simulacao.kitLitoral) {
+        <p class="aviso">
+          Incluímos o kit litoral, com materiais adequados à maior exposição à maresia.
+        </p>
+      }
+      @if (simulacao.projecao?.length) {
+        <h2>Projeção anual com degradação e Fio B</h2>
+        <div class="tabela" role="table">
+          @for (ano of simulacao.projecao; track ano.ano) {
+            <p>
+              <span>{{ ano.anoCalendario }}</span
+              ><strong>{{ formatarMoeda(ano.economiaLiquidaAnualReais) }}</strong>
+            </p>
+          }
+        </div>
+      }
+    }
+    @if (simulacao.calibracaoPendente) {
+      <p class="aviso">
+        Valores em calibração. Esta é uma estimativa preliminar sujeita a visita técnica.
+      </p>
+    }
+    @if (desfecho(); as estado) {
+      <section class="confirmacao">
+        @if (estado === 'PropostaEmitida') {
+          <h2>Proposta emitida</h2>
+          <p>Estamos preparando o PDF e enviaremos pelo canal escolhido.</p>
+        } @else if (estado === 'RoteadoParaHumano') {
+          <h2>Um engenheiro vai avaliar</h2>
+          <p>Um consultor entrará em contato para entender seu projeto.</p>
+        } @else {
+          <h2>Um consultor vai entrar em contato</h2>
+          <p>A estimativa ainda está em calibração e nenhuma proposta definitiva foi emitida.</p>
+        }
+      </section>
+    } @else {
+      <form class="contato-form" (submit)="deixarContato($event)">
+        <h2>Receba os próximos passos</h2>
+        <p>
+          Usaremos seus dados somente para contato sobre esta simulação. Consulte nossa
+          <a routerLink="/privacidade">política de privacidade</a> antes de preencher.
+        </p>
+        <label>Nome<input name="Nome" required /></label>
+        <label>Telefone<input name="Telefone" type="tel" required /></label>
+        <label>E-mail<input name="Email" type="email" required /></label>
+        <label
+          >Canal preferido<select name="CanalPreferido">
+            <option value="Email">E-mail</option>
+            <option value="Whatsapp">WhatsApp</option>
+          </select></label
+        >
+        <label
+          >Conta de luz (opcional)<input
+            name="Anexo"
+            type="file"
+            accept="application/pdf,image/jpeg,image/png"
+        /></label>
+        <label class="consentimento"
+          ><input name="FinalidadesAceitas" type="checkbox" value="ContatoComercial" required />
+          Aceito o contato comercial sobre esta simulação.</label
+        >
+        <input name="VersaoTexto" type="hidden" value="contato-comercial-v1" />
+        @if (erroContato()) {
+          <p class="erro" role="alert">{{ erroContato() }}</p>
+        }
+        <button type="submit" [disabled]="enviando()">
+          {{ enviando() ? 'Enviando…' : 'Quero receber contato' }}
+        </button>
+      </form>
+    }
+    <a class="voltar" routerLink="/simular">Voltar e alterar meus dados</a>
+  } @else if (erro()) {
+    <h1>Não encontramos esta simulação</h1>
+    <a routerLink="/simular">Fazer uma nova estimativa</a>
+  } @else {
+    <p>Carregando sua estimativa…</p>
+  }
+</main>

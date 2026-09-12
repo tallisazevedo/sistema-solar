@@ -1,0 +1,157 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
+import { Simulador } from './simulador';
+
+describe('Simulador', () => {
+  let fixture: ComponentFixture<Simulador>;
+  const fetchMock = vi.fn((input: RequestInfo | URL, _init?: RequestInit) =>
+    Promise.resolve({
+      ok: true,
+      json: () =>
+        Promise.resolve(
+          String(input).endsWith('/municipios')
+            ? [{ codigoIbge: '3205309', nome: 'Vitória' }]
+            : { id: 'simulacao-1' },
+        ),
+    } as Response),
+  );
+
+  beforeEach(async () => {
+    fetchMock.mockClear();
+    vi.stubGlobal('fetch', fetchMock);
+    Object.defineProperty(navigator, 'sendBeacon', {
+      configurable: true,
+      value: vi.fn(() => { throw new Error('telemetria indisponivel'); }),
+    });
+    await TestBed.configureTestingModule({
+      imports: [Simulador],
+      providers: [provideRouter([])],
+    }).compileComponents();
+    fixture = TestBed.createComponent(Simulador);
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await fixture.whenStable();
+    fixture.detectChanges();
+  });
+
+  it('continua utilizavel quando o envio de telemetria falha', () => {
+    expect((fixture.nativeElement as HTMLElement).querySelector('form')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Conte um pouco sobre seu imóvel');
+  });
+
+  it('envia o consumo medio e abre o resultado', async () => {
+    const pagina = fixture.nativeElement as HTMLElement;
+    const municipio = pagina.querySelector<HTMLSelectElement>(
+      'select[name="municipioCodigoIbge"]',
+    )!;
+    municipio.selectedIndex = 1;
+    municipio.dispatchEvent(new Event('change'));
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    const formulario = pagina.querySelector('form')!;
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await fixture.whenStable();
+
+    const [, init] = fetchMock.mock.calls.at(-1)!;
+    expect(JSON.parse(init!.body as string)).toEqual(
+      expect.objectContaining({ consumoMedioMensalKwh: 500, municipioCodigoIbge: '3205309' }),
+    );
+    expect(navigate).toHaveBeenCalledWith(['/resultado', 'simulacao-1']);
+    expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/api/publico/eventos'))).toBe(true);
+  });
+
+  it('mantem os dados quando a API falha', async () => {
+    const pagina = fixture.nativeElement as HTMLElement;
+    const consumo = pagina.querySelector<HTMLInputElement>('[name="consumoMedioMensalKwh"]')!;
+    consumo.value = '777';
+    const municipio = pagina.querySelector<HTMLSelectElement>('[name="municipioCodigoIbge"]')!;
+    municipio.selectedIndex = 1;
+    fetchMock.mockRejectedValueOnce(new Error('indisponivel'));
+    const formulario = pagina.querySelector('form')!;
+
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(consumo.value).toBe('777');
+    expect(pagina.textContent).toContain('Seus dados continuam aqui');
+    expect(pagina.textContent).toContain('Não foi possível conectar');
+  });
+
+  it('mostra a mensagem em portugues do ProblemDetails quando a API devolve 400', async () => {
+    const pagina = fixture.nativeElement as HTMLElement;
+    const municipio = pagina.querySelector<HTMLSelectElement>('[name="municipioCodigoIbge"]')!;
+    municipio.selectedIndex = 1;
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      json: () => Promise.resolve({ title: 'Entrada invalida.', detail: 'Municipio nao encontrado.' }),
+    } as Response);
+    const formulario = pagina.querySelector('form')!;
+
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(pagina.textContent).toContain('Municipio nao encontrado.');
+  });
+
+  it('mostra o tempo de espera quando a API devolve 429', async () => {
+    const pagina = fixture.nativeElement as HTMLElement;
+    const municipio = pagina.querySelector<HTMLSelectElement>('[name="municipioCodigoIbge"]')!;
+    municipio.selectedIndex = 1;
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      headers: new Headers({ 'Retry-After': '45' }),
+      json: () => Promise.resolve({ title: 'Muitas requisicoes.', detail: 'Tente novamente em 45 segundos.' }),
+    } as Response);
+    const formulario = pagina.querySelector('form')!;
+
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(pagina.textContent).toContain('45 segundos');
+  });
+
+  it('mostra mensagem generica quando a API devolve 500', async () => {
+    const pagina = fixture.nativeElement as HTMLElement;
+    const municipio = pagina.querySelector<HTMLSelectElement>('[name="municipioCodigoIbge"]')!;
+    municipio.selectedIndex = 1;
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ title: 'Erro interno.', detail: 'System.Exception em algum lugar' }),
+    } as Response);
+    const formulario = pagina.querySelector('form')!;
+
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(pagina.textContent).toContain('Ocorreu um erro inesperado');
+    expect(pagina.textContent).not.toContain('System.Exception');
+  });
+});

@@ -1,0 +1,34 @@
+<h1>Leads</h1>
+<a routerLink="/leads/novo">Cadastrar lead</a>
+<section>
+  <label>Origem <select (change)="selecionarOrigem($any($event.target).value)">
+    <option value="">Todas</option><option value="0">Landing</option><option value="1">Indicação</option>
+    <option value="2">Telefone</option><option value="3">Rede social</option><option value="4">Outro</option>
+  </select></label>
+  <label>Status <select (change)="selecionarStatus($any($event.target).value)">
+    <option value="">Todos</option><option value="0">Novo</option><option value="1">Em atendimento</option>
+    <option value="2">Visita agendada</option><option value="3">Convertido</option><option value="4">Perdido</option>
+  </select></label>
+  <button type="button" (click)="filtrar()">Filtrar</button>
+</section>
+@if (carregando()) {
+  <p>Carregando…</p>
+}
+<div class="lista">
+  @for (lead of leads(); track lead.id) {
+    <a [routerLink]="['/leads', lead.id]" [class.roteado]="lead.roteadoParaHumano">
+      <strong>{{ lead.nome }}</strong
+      ><span>{{ lead.criadoEm | date: 'dd/MM/yyyy HH:mm' }}</span>
+      @if (lead.roteadoParaHumano) {
+        <mark>Engenharia</mark>
+      }
+      @if (lead.calibracaoPendente) {
+        <mark>Calibração pendente — sem PDF</mark>
+      }
+    </a>
+  } @empty {
+    @if (!carregando()) {
+      <p>Nenhum lead recebido.</p>
+    }
+  }
+</div>

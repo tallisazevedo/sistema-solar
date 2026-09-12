@@ -5,6 +5,7 @@ public sealed class Simulacao : EntidadeBase
     public Guid? LeadId { get; set; }
     public Guid? ContaExtraidaId { get; set; }
     public Guid ConfiguracaoVersaoId { get; set; }
+    public OrigemSimulacao Origem { get; set; } = OrigemSimulacao.Interna;
 
     /// <summary>Snapshot serializado da EntradaSimulacao usada para gerar este resultado.</summary>
     public required string EntradasSnapshot { get; set; }

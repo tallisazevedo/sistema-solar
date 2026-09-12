@@ -2,5 +2,9 @@ namespace SolarES.Aplicacao.Tests;
 
 internal sealed class FakeTimeProvider(DateTimeOffset agora) : TimeProvider
 {
-    public override DateTimeOffset GetUtcNow() => agora;
+    private DateTimeOffset _agora = agora;
+
+    public override DateTimeOffset GetUtcNow() => _agora;
+
+    public void AvancarPara(DateTimeOffset momento) => _agora = momento;
 }

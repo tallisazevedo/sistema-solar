@@ -1,0 +1,34 @@
+<h1>Propostas</h1>
+<label>
+  Status
+  <select (change)="alterarFiltro($any($event.target).value)">
+    <option value="">Todos</option>
+    @for (status of statusDisponiveis; track status) {
+      <option [value]="status">{{ status }}</option>
+    }
+  </select>
+</label>
+@if (carregando()) {
+  <p>Carregando…</p>
+}
+<div class="lista">
+  @for (proposta of propostas(); track proposta.id) {
+    <a [routerLink]="['/propostas', proposta.id]">
+      <strong>{{ proposta.numero }}</strong>
+      <span>{{ proposta.status }}</span>
+      @if (proposta.status === 'Emitida') {
+        <span
+          >{{
+            diasParaVencer(proposta.validaAte) >= 0
+              ? diasParaVencer(proposta.validaAte) + ' dias para vencer'
+              : 'Vencida há ' + -diasParaVencer(proposta.validaAte) + ' dias'
+          }}</span
+        >
+      }
+    </a>
+  } @empty {
+    @if (!carregando()) {
+      <p>Nenhuma proposta encontrada.</p>
+    }
+  }
+</div>

@@ -13,4 +13,6 @@ public sealed record ResultadoSimulacao(
     decimal Vpl,
     bool RoteadaParaHumano,
     string? MotivoRoteamento,
+    bool KitLitoral,
+    bool InstalacaoRecomendada,
     IReadOnlyList<AnoProjecao> Projecao);

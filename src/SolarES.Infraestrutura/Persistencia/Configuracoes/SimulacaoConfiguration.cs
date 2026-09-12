@@ -10,6 +10,7 @@ public sealed class SimulacaoConfiguration : IEntityTypeConfiguration<SimulacaoE
     {
         builder.Property(s => s.EntradasSnapshot).HasColumnType("jsonb");
         builder.Property(s => s.ResultadoSnapshot).HasColumnType("jsonb");
+        builder.Property(s => s.Origem).HasConversion<string>().HasMaxLength(20);
 
         builder.Property(s => s.PotenciaKwp).HasPrecision(18, 6);
         builder.Property(s => s.Capex).HasPrecision(18, 2);
