@@ -62,7 +62,7 @@ export type DesfechoCapturaLead = 'CalibracaoPendente' | 'RoteadoParaHumano' | '
  * pronta para exibir ao visitante -- os componentes nunca leem `response.status` nem
  * fazem parse de ProblemDetails por conta propria.
  */
-export type TipoErroPublico = 'validacao' | 'servidor' | 'rede';
+export type TipoErroPublico = 'validacao' | 'servidor' | 'rede' | 'limite';
 
 const MENSAGEM_ERRO_REDE = 'Não foi possível conectar. Verifique sua internet e tente novamente.';
 const MENSAGEM_ERRO_SERVIDOR = 'Ocorreu um erro inesperado. Tente novamente em instantes.';
@@ -136,6 +136,16 @@ export class PublicoApiService {
         detalhe = typeof corpo?.detail === 'string' ? corpo.detail : undefined;
       } catch {
         // Corpo de erro sem JSON valido (ex.: 413 do servidor web antes da Api) -- segue com mensagem generica.
+      }
+
+      if (response.status === 429) {
+        const segundos = Number(response.headers.get('Retry-After'));
+        const espera = Number.isFinite(segundos) && segundos > 0 ? segundos : 60;
+        throw new ErroHttpPublico(
+          'limite',
+          response.status,
+          `Muitas tentativas. Tente novamente em ${espera} segundos.`,
+        );
       }
 
       if (response.status >= 500) {

@@ -1,8 +1,10 @@
+using System.Net;
 using System.Text;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -148,6 +150,8 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build());
 
+builder.Services.AddRateLimitingPublico(builder.Configuration);
+
 builder.Services.AddExceptionHandler<ExcecaoDeValidacaoDominioHandler>();
 builder.Services.AddExceptionHandler<FallbackExceptionHandler>();
 builder.Services.AddProblemDetails(options =>
@@ -175,8 +179,26 @@ if (app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 
+// X-Forwarded-For so e' confiavel vindo dos proxies listados aqui -- sem essa lista, o
+// RemoteIpAddress da conexao TCP e' usado como esta' (comportamento seguro por padrao).
+var proxiesConfiaveis = builder.Configuration.GetSection("ProxiesConfiaveis").Get<string[]>() ?? [];
+if (proxiesConfiaveis.Length > 0)
+{
+    var opcoesForwardedHeaders = new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedFor };
+    opcoesForwardedHeaders.KnownProxies.Clear();
+    foreach (var proxy in proxiesConfiaveis)
+    {
+        opcoesForwardedHeaders.KnownProxies.Add(IPAddress.Parse(proxy));
+    }
+
+    app.UseForwardedHeaders(opcoesForwardedHeaders);
+}
+
 app.UseHttpsRedirection();
 app.UseCors();
+
+// Antes da autenticacao: um robo de login nao deve nem chegar no JwtBearerHandler.
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

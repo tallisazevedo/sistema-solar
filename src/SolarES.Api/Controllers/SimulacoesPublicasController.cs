@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Text.Json;
 using SolarES.Api.Contratos;
 using SolarES.Aplicacao.Compartilhado;
@@ -15,6 +16,7 @@ namespace SolarES.Api.Controllers;
 [ApiController]
 [AllowAnonymous]
 [EnableCors("Landing")]
+[EnableRateLimiting(RateLimitingExtensions.PublicoLeitura)]
 [Route("api/publico")]
 public sealed class SimulacoesPublicasController(
     SimulacaoAppService simulacaoAppService,
@@ -23,6 +25,7 @@ public sealed class SimulacoesPublicasController(
     IRepositorioCrud<MunicipioHsp> municipiosRepositorio) : ControllerBase
 {
     [HttpPost("simulacoes/{id:guid}/lead")]
+    [EnableRateLimiting(RateLimitingExtensions.PublicoLead)]
     public async Task<ActionResult<CapturarLeadPublicoResponse>> CapturarLead(Guid id,
         [FromForm] CapturarLeadPublicoRequest request, CancellationToken ct)
     {
@@ -53,6 +56,7 @@ public sealed class SimulacoesPublicasController(
     }
 
     [HttpPost("simulacoes")]
+    [EnableRateLimiting(RateLimitingExtensions.PublicoSimulacao)]
     public async Task<ActionResult<SimulacaoPublicaResponse>> Criar(
         CriarSimulacaoPublicaRequest request,
         CancellationToken ct)

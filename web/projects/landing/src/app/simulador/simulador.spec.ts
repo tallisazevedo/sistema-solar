@@ -109,6 +109,29 @@ describe('Simulador', () => {
     expect(pagina.textContent).toContain('Municipio nao encontrado.');
   });
 
+  it('mostra o tempo de espera quando a API devolve 429', async () => {
+    const pagina = fixture.nativeElement as HTMLElement;
+    const municipio = pagina.querySelector<HTMLSelectElement>('[name="municipioCodigoIbge"]')!;
+    municipio.selectedIndex = 1;
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      headers: new Headers({ 'Retry-After': '45' }),
+      json: () => Promise.resolve({ title: 'Muitas requisicoes.', detail: 'Tente novamente em 45 segundos.' }),
+    } as Response);
+    const formulario = pagina.querySelector('form')!;
+
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(pagina.textContent).toContain('45 segundos');
+  });
+
   it('mostra mensagem generica quando a API devolve 500', async () => {
     const pagina = fixture.nativeElement as HTMLElement;
     const municipio = pagina.querySelector<HTMLSelectElement>('[name="municipioCodigoIbge"]')!;

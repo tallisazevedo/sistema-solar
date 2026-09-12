@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SolarES.Aplicacao.Propostas;
 
 namespace SolarES.Api.Controllers;
@@ -10,9 +11,12 @@ namespace SolarES.Api.Controllers;
 /// Webhook da WhatsApp Cloud API (T25.2). Anonimo por natureza -- a Meta nao manda
 /// bearer token, so' a assinatura HMAC do corpo. AllowAnonymous aqui e' seguro porque
 /// a assinatura e' validada antes de qualquer efeito (ver AssinaturaValida).
+/// DisableRateLimiting: a Meta manda de poucos IPs proprios -- limitar por IP aqui
+/// derrubaria a confirmacao de entrega de todos os clientes de uma vez.
 /// </summary>
 [ApiController]
 [AllowAnonymous]
+[DisableRateLimiting]
 [Route("api/webhooks/whatsapp")]
 public sealed class WebhookWhatsAppController(IConfiguration configuracao, WebhookWhatsAppAppService servico) : ControllerBase
 {

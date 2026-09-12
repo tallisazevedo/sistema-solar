@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SolarES.Api.Contratos;
 using SolarES.Aplicacao.Identidade;
 
@@ -11,6 +12,7 @@ public sealed class AutenticacaoController(AutenticacaoAppService servico) : Con
 {
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitingExtensions.Login)]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request, CancellationToken ct)
     {
         var resultado = await servico.LoginAsync(request.Email, request.Senha, ct);
