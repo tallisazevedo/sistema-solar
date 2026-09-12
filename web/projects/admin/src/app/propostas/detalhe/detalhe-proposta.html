@@ -29,6 +29,9 @@
         />
       </label>
       <button type="button" (click)="marcarPerdida()">Marcar como perdida</button>
+      @if (item.status === 'Vencida') {
+        <button type="button" (click)="renovar()">Renovar proposta</button>
+      }
       @if (erroAcao()) {
         <p class="erro" role="alert">{{ erroAcao() }}</p>
       }

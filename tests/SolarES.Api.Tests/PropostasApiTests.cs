@@ -182,6 +182,18 @@ public class PropostasApiTests : IClassFixture<SolarESApiFactory>
     }
 
     [Fact]
+    public async Task Dada_PropostaNaoVencida_Quando_Renova_Entao_RetornaConflito()
+    {
+        var id = await PrepararPropostaAsync(StatusProposta.Emitida, DateTimeOffset.UtcNow.AddDays(10));
+        await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.VendedorEmail,
+            SolarESApiFactory.VendedorSenha);
+
+        var resposta = await _cliente.PostAsync($"/api/propostas/{id}/renovacao", null);
+
+        Assert.Equal(HttpStatusCode.Conflict, resposta.StatusCode);
+    }
+
+    [Fact]
     public async Task Dado_PropostaInexistente_Quando_AceitaOuPerde_Entao_RetornaNaoEncontrado()
     {
         await SolarESApiFactory.ClienteAutenticadoAsync(_cliente, SolarESApiFactory.VendedorEmail, SolarESApiFactory.VendedorSenha);

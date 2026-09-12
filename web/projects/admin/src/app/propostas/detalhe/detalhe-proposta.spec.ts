@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { provideApiConfiguration } from 'shared';
 import { DetalheProposta } from './detalhe-proposta';
 
@@ -35,6 +35,7 @@ describe('DetalheProposta', () => {
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(DetalheProposta);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     fixture.detectChanges();
     const httpMock = TestBed.inject(HttpTestingController);
     httpMock.expectOne('/api/propostas/1').flush(propostaBase());
@@ -108,6 +109,31 @@ describe('DetalheProposta', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Proposta venceu');
+  });
+
+  it('renova uma proposta vencida e navega para a nova proposta', async () => {
+    await TestBed.configureTestingModule({
+      imports: [DetalheProposta],
+      providers: [
+        provideRouter([]), provideHttpClient(), provideHttpClientTesting(), provideApiConfiguration(''),
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: '1' }) } } },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(DetalheProposta);
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    fixture.detectChanges();
+    const httpMock = TestBed.inject(HttpTestingController);
+    httpMock.expectOne('/api/propostas/1').flush(propostaBase({ status: 'Vencida' }));
+    httpMock.expectOne('/api/propostas/1/envios').flush([]);
+    fixture.detectChanges();
+
+    const botao = Array.from(fixture.nativeElement.querySelectorAll('button')).find((item) =>
+      (item as HTMLButtonElement).textContent?.includes('Renovar proposta')) as HTMLButtonElement;
+    botao.click();
+
+    httpMock.expectOne('/api/propostas/1/renovacao').flush(propostaBase({ id: '2', numero: 'PROP-2026-0002' }));
+    expect(botao).toBeTruthy();
+    expect(navegar).toHaveBeenCalledWith(['/propostas', '2']);
   });
 
   it('desabilita o envio e explica o motivo quando a calibracao esta pendente', async () => {

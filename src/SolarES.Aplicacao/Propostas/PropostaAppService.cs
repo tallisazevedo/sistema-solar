@@ -1,8 +1,11 @@
 using Hangfire;
+using SolarES.Dominio;
+using SolarES.Aplicacao.Compartilhado;
 using SolarES.Aplicacao.Configuracao;
 using SolarES.Aplicacao.Simulacoes;
 using SolarES.Dominio.Configuracao;
 using SolarES.Dominio.Proposta;
+using SolarES.Dominio.Simulacao;
 using PropostaEntidade = SolarES.Dominio.Proposta.Proposta;
 
 namespace SolarES.Aplicacao.Propostas;
@@ -13,6 +16,8 @@ public sealed class PropostaAppService(
     IConfiguracaoVersaoRepository configuracaoRepositorio,
     IArmazenamentoPdf armazenamento,
     IBackgroundJobClient jobs,
+    SimulacaoAppService simulacaoAppService,
+    IExecutorTransacional executorTransacional,
     TimeProvider relogio)
 {
     public async Task<PropostaEntidade> GerarAsync(Guid simulacaoId, Guid? responsavelUsuarioId, CancellationToken ct)
@@ -26,6 +31,18 @@ public sealed class PropostaAppService(
     /// precisa encadear uma continuacao (T25.3: envio automatico) usa esse id.
     /// </summary>
     public async Task<(PropostaEntidade Proposta, string JobIdGeracaoPdf)> GerarComJobIdAsync(Guid simulacaoId,
+        Guid? responsavelUsuarioId, CancellationToken ct)
+    {
+        var proposta = await CriarEPersistirAsync(simulacaoId, responsavelUsuarioId, ct);
+
+        // So enfileira -- o metodo devolve antes do PDF existir, entao o POST nunca
+        // espera a geracao (aceite da T21: "geracao nao bloqueia request").
+        var jobId = jobs.Enqueue<GerarPdfPropostaJob>(job => job.ExecutarAsync(proposta.Id, CancellationToken.None));
+
+        return (proposta, jobId);
+    }
+
+    private async Task<PropostaEntidade> CriarEPersistirAsync(Guid simulacaoId,
         Guid? responsavelUsuarioId, CancellationToken ct)
     {
         var simulacao = await simulacaoRepositorio.ObterPorIdAsync(simulacaoId, ct)
@@ -54,11 +71,7 @@ public sealed class PropostaAppService(
         propostaRepositorio.Adicionar(proposta);
         await propostaRepositorio.SalvarAlteracoesAsync(ct);
 
-        // So enfileira -- o metodo devolve antes do PDF existir, entao o POST nunca
-        // espera a geracao (aceite da T21: "geracao nao bloqueia request").
-        var jobId = jobs.Enqueue<GerarPdfPropostaJob>(job => job.ExecutarAsync(proposta.Id, CancellationToken.None));
-
-        return (proposta, jobId);
+        return proposta;
     }
 
     public Task<IReadOnlyList<PropostaEntidade>> ListarAsync(StatusProposta? status, CancellationToken ct) =>
@@ -90,6 +103,26 @@ public sealed class PropostaAppService(
         proposta.MarcarPerdida(relogio.GetUtcNow(), motivo);
         await propostaRepositorio.SalvarAlteracoesAsync(ct);
         return true;
+    }
+
+    public async Task<PropostaEntidade> RenovarAsync(Guid id, Guid responsavelUsuarioId, CancellationToken ct)
+    {
+        var propostaOriginal = await propostaRepositorio.ObterPorIdAsync(id, ct)
+            ?? throw new KeyNotFoundException("Proposta nao encontrada.");
+        if (propostaOriginal.Status != StatusProposta.Vencida)
+            throw new TransicaoInvalidaException("Somente propostas vencidas podem ser renovadas.");
+
+        var simulacaoOriginal = await simulacaoRepositorio.ObterPorIdAsync(propostaOriginal.SimulacaoId, ct)
+            ?? throw new InvalidOperationException("Simulacao original nao encontrada.");
+        var entrada = System.Text.Json.JsonSerializer.Deserialize<EntradaSimulacao>(simulacaoOriginal.EntradasSnapshot)
+            ?? throw new InvalidOperationException("Entradas da simulacao original sao invalidas.");
+        var renovada = await executorTransacional.ExecutarAsync(async cancellationToken =>
+        {
+            var novaSimulacao = await simulacaoAppService.CriarAsync(entrada, cancellationToken);
+            return await CriarEPersistirAsync(novaSimulacao.Id, responsavelUsuarioId, cancellationToken);
+        }, ct);
+        jobs.Enqueue<GerarPdfPropostaJob>(job => job.ExecutarAsync(renovada.Id, CancellationToken.None));
+        return renovada;
     }
 
     public async Task<(byte[] ConteudoPdf, string Numero)> ObterPdfAsync(Guid propostaId, CancellationToken ct)

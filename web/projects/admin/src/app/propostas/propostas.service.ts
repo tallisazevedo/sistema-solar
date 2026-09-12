@@ -69,4 +69,8 @@ export class PropostasService {
   reenviar(propostaId: string, envioId: string): Observable<void> {
     return this.http.post<void>(`${this.api.rootUrl}/api/propostas/${propostaId}/envios/${envioId}/reenvio`, null);
   }
+
+  renovar(id: string): Observable<PropostaAdmin> {
+    return this.http.post<PropostaAdmin>(`${this.api.rootUrl}/api/propostas/${id}/renovacao`, null);
+  }
 }

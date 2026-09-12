@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using SolarES.Api.Contratos;
 using SolarES.Aplicacao.Propostas;
 using SolarES.Dominio.Proposta;
@@ -53,4 +54,21 @@ public sealed class PropostasController(PropostaAppService servico) : Controller
     [HttpPost("api/propostas/{id:guid}/perda")]
     public async Task<IActionResult> MarcarPerdida(Guid id, [FromBody] MarcarPerdidaRequest? request, CancellationToken ct) =>
         await servico.MarcarPerdidaAsync(id, request?.Motivo, ct) ? NoContent() : NotFound();
+
+    [HttpPost("api/propostas/{id:guid}/renovacao")]
+    [Authorize(Roles = "Dono,Vendedor")]
+    public async Task<ActionResult<PropostaResponse>> Renovar(Guid id, CancellationToken ct)
+    {
+        try
+        {
+            var usuarioId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var proposta = await servico.RenovarAsync(id, usuarioId, ct);
+            return Ok(PropostaResponse.DeEntidade(proposta,
+                await servico.PossuiCalibracaoPendenteAsync(proposta, ct)));
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
 }

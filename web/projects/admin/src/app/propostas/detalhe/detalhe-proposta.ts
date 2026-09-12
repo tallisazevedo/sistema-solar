@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CanalEnvio, EnvioPropostaAdmin, PropostaAdmin, PropostasService } from '../propostas.service';
 
 @Component({
@@ -12,6 +12,7 @@ import { CanalEnvio, EnvioPropostaAdmin, PropostaAdmin, PropostasService } from 
 export class DetalheProposta implements OnInit {
   private readonly rota = inject(ActivatedRoute);
   private readonly servico = inject(PropostasService);
+  private readonly router = inject(Router);
   protected readonly proposta = signal<PropostaAdmin | null>(null);
   protected readonly erro = signal(false);
   protected readonly erroAcao = signal<string | null>(null);
@@ -86,6 +87,16 @@ export class DetalheProposta implements OnInit {
     this.servico.marcarPerdida(proposta.id, this.motivoPerda() || null).subscribe({
       next: () => this.carregar(),
       error: () => this.erroAcao.set('Não foi possível marcar a proposta como perdida agora.'),
+    });
+  }
+
+  protected renovar(): void {
+    const proposta = this.proposta();
+    if (!proposta) return;
+    this.erroAcao.set(null);
+    this.servico.renovar(proposta.id).subscribe({
+      next: (nova) => this.router.navigate(['/propostas', nova.id]),
+      error: () => this.erroAcao.set('Não foi possível renovar a proposta agora.'),
     });
   }
 
