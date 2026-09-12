@@ -76,6 +76,11 @@ else
     builder.Services.AddScoped<ICanalEnvioProposta, CanalEnvioEmailEmDisco>();
 }
 
+builder.Services.AddHttpClient<CanalEnvioWhatsApp>(cliente =>
+    cliente.BaseAddress = new Uri(builder.Configuration["WhatsApp:BaseUrl"] ?? "https://graph.facebook.com/v21.0/"));
+builder.Services.AddScoped<ICanalEnvioProposta>(sp => sp.GetRequiredService<CanalEnvioWhatsApp>());
+builder.Services.AddScoped<WebhookWhatsAppAppService>();
+
 builder.Services.AddHangfire(cfg => cfg
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()

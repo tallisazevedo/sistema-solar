@@ -99,6 +99,18 @@ public class EnvioPropostaAppServiceTests
     }
 
     [Fact]
+    public async Task Dada_PropostaSobPremissaProvisoria_Quando_SolicitaEnvioPorWhatsApp_Entao_RecusaSemPersistirNemChamarCanal()
+    {
+        var (servico, contexto, proposta, canal) = CriarCenario(comPremissaProvisoria: true);
+
+        await Assert.ThrowsAsync<TransicaoInvalidaException>(
+            () => servico.SolicitarEnvioAsync(proposta.Id, CanalEnvio.Whatsapp, "27999999999", CancellationToken.None));
+
+        Assert.Empty(await contexto.EnviosProposta.ToListAsync());
+        Assert.Equal(0, canal.ChamadasRecebidas);
+    }
+
+    [Fact]
     public async Task Dada_PropostaSemPremissaProvisoria_Quando_SolicitaEnvio_Entao_CriaEnvioPendente()
     {
         var (servico, contexto, proposta, _) = CriarCenario(comPremissaProvisoria: false);
