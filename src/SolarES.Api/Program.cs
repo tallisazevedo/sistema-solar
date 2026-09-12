@@ -180,6 +180,8 @@ gerenciadorJobsRecorrentes.AddOrUpdate<VencerPropostasJob>(
     new RecurringJobOptions { TimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo") });
 gerenciadorJobsRecorrentes.AddOrUpdate<DescartarAnexosVencidosJob>(
     "descartar-anexos-vencidos", job => job.ExecutarAsync(CancellationToken.None), Cron.Daily());
+gerenciadorJobsRecorrentes.AddOrUpdate<ExpurgarLeadsInativosJob>(
+    "expurgar-leads-inativos", job => job.ExecutarAsync(CancellationToken.None), Cron.Daily());
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -237,11 +239,6 @@ app.MapHangfireDashboard("/hangfire", new DashboardOptions
 {
     Authorization = [new AcessoLocalHangfireDashboardFilter()],
 }).AllowAnonymous();
-
-app.Services.GetRequiredService<IRecurringJobManager>().AddOrUpdate<DescartarAnexosVencidosJob>(
-    "descartar-anexos-vencidos", job => job.ExecutarAsync(CancellationToken.None), Cron.Daily());
-app.Services.GetRequiredService<IRecurringJobManager>().AddOrUpdate<ExpurgarLeadsInativosJob>(
-    "expurgar-leads-inativos", job => job.ExecutarAsync(CancellationToken.None), Cron.Daily());
 
 app.Run();
 
