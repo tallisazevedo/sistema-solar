@@ -56,6 +56,33 @@ export interface SimulacaoPublica {
 
 export type DesfechoCapturaLead = 'CalibracaoPendente' | 'RoteadoParaHumano' | 'PropostaEmitida';
 
+/**
+ * Tratamento central de erro HTTP: toda chamada ao backend passa por `obter`, que
+ * classifica a falha (validacao, servidor ou rede) e devolve uma mensagem em portugues
+ * pronta para exibir ao visitante -- os componentes nunca leem `response.status` nem
+ * fazem parse de ProblemDetails por conta propria.
+ */
+export type TipoErroPublico = 'validacao' | 'servidor' | 'rede';
+
+const MENSAGEM_ERRO_REDE = 'Não foi possível conectar. Verifique sua internet e tente novamente.';
+const MENSAGEM_ERRO_SERVIDOR = 'Ocorreu um erro inesperado. Tente novamente em instantes.';
+
+export class ErroHttpPublico extends Error {
+  constructor(
+    readonly tipo: TipoErroPublico,
+    readonly status: number | null,
+    mensagem: string,
+  ) {
+    super(mensagem);
+    this.name = 'ErroHttpPublico';
+  }
+}
+
+/** Mensagem para exibir ao visitante a partir de qualquer erro capturado num `.catch`. */
+export function mensagemDeErroPublico(erro: unknown): string {
+  return erro instanceof ErroHttpPublico ? erro.message : MENSAGEM_ERRO_SERVIDOR;
+}
+
 export class PublicoApiService {
   registrarInicioSimulacao(sessaoFunilId: string): void {
     const corpo = JSON.stringify({ tipo: 0, sessaoFunilId });
@@ -94,10 +121,29 @@ export class PublicoApiService {
     return this.obter(`/api/publico/simulacoes/${id}/lead`, { method: 'POST', body: formulario });
   }
 
-  private obter<T>(url: string, init?: RequestInit): Promise<T> {
-    return fetch(url, init).then((response) => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return response.json() as Promise<T>;
-    });
+  private async obter<T>(url: string, init?: RequestInit): Promise<T> {
+    let response: Response;
+    try {
+      response = await fetch(url, init);
+    } catch {
+      throw new ErroHttpPublico('rede', null, MENSAGEM_ERRO_REDE);
+    }
+
+    if (!response.ok) {
+      let detalhe: string | undefined;
+      try {
+        const corpo = (await response.json()) as { detail?: unknown };
+        detalhe = typeof corpo?.detail === 'string' ? corpo.detail : undefined;
+      } catch {
+        // Corpo de erro sem JSON valido (ex.: 413 do servidor web antes da Api) -- segue com mensagem generica.
+      }
+
+      if (response.status >= 500) {
+        throw new ErroHttpPublico('servidor', response.status, MENSAGEM_ERRO_SERVIDOR);
+      }
+      throw new ErroHttpPublico('validacao', response.status, detalhe ?? MENSAGEM_ERRO_SERVIDOR);
+    }
+
+    return response.json() as Promise<T>;
   }
 }

@@ -10,7 +10,7 @@ namespace SolarES.Api;
 /// (ArgumentException, InvalidOperationException) -- sem isso, viraria 500 em vez de
 /// 400. Nao duplica a regra do Dominio, so traduz a excecao ja lancada.
 /// </summary>
-public sealed class ExcecaoDeValidacaoDominioHandler : IExceptionHandler
+public sealed class ExcecaoDeValidacaoDominioHandler(IProblemDetailsService problemDetailsService) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
@@ -18,30 +18,14 @@ public sealed class ExcecaoDeValidacaoDominioHandler : IExceptionHandler
         // "entrada invalida" -- 404, nao 400.
         if (exception is PropostaAindaNaoGeradaException aindaNaoGerada)
         {
-            httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Status = StatusCodes.Status404NotFound,
-                Title = "PDF ainda nao disponivel.",
-                Detail = aindaNaoGerada.Message,
-            }, cancellationToken);
-
-            return true;
+            return await EscreverAsync(httpContext, exception, StatusCodes.Status404NotFound, "PDF ainda nao disponivel.", aindaNaoGerada.Message, cancellationToken);
         }
 
         // Entrada valida, mas o estado atual do agregado recusa a operacao (proposta
         // vencida, status terminal, calibracao pendente) -- 409, nao 400.
         if (exception is TransicaoInvalidaException conflito)
         {
-            httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
-            await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Status = StatusCodes.Status409Conflict,
-                Title = "Conflito de estado.",
-                Detail = conflito.Message,
-            }, cancellationToken);
-
-            return true;
+            return await EscreverAsync(httpContext, exception, StatusCodes.Status409Conflict, "Conflito de estado.", conflito.Message, cancellationToken);
         }
 
         if (exception is not (ArgumentException or InvalidOperationException))
@@ -49,13 +33,22 @@ public sealed class ExcecaoDeValidacaoDominioHandler : IExceptionHandler
             return false;
         }
 
-        httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-        await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
+        return await EscreverAsync(httpContext, exception, StatusCodes.Status400BadRequest, "Entrada invalida.", exception.Message, cancellationToken);
+    }
+
+    private async ValueTask<bool> EscreverAsync(HttpContext httpContext, Exception exception, int status, string titulo, string detalhe, CancellationToken cancellationToken)
+    {
+        httpContext.Response.StatusCode = status;
+
+        var problemDetails = new ProblemDetails { Status = status, Title = titulo, Detail = detalhe };
+        problemDetails.Extensions["traceId"] = httpContext.TraceIdentifier;
+
+        await problemDetailsService.WriteAsync(new ProblemDetailsContext
         {
-            Status = StatusCodes.Status400BadRequest,
-            Title = "Entrada invalida.",
-            Detail = exception.Message,
-        }, cancellationToken);
+            HttpContext = httpContext,
+            Exception = exception,
+            ProblemDetails = problemDetails,
+        });
 
         return true;
     }

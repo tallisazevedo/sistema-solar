@@ -84,5 +84,51 @@ describe('Simulador', () => {
 
     expect(consumo.value).toBe('777');
     expect(pagina.textContent).toContain('Seus dados continuam aqui');
+    expect(pagina.textContent).toContain('Não foi possível conectar');
+  });
+
+  it('mostra a mensagem em portugues do ProblemDetails quando a API devolve 400', async () => {
+    const pagina = fixture.nativeElement as HTMLElement;
+    const municipio = pagina.querySelector<HTMLSelectElement>('[name="municipioCodigoIbge"]')!;
+    municipio.selectedIndex = 1;
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      json: () => Promise.resolve({ title: 'Entrada invalida.', detail: 'Municipio nao encontrado.' }),
+    } as Response);
+    const formulario = pagina.querySelector('form')!;
+
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(pagina.textContent).toContain('Municipio nao encontrado.');
+  });
+
+  it('mostra mensagem generica quando a API devolve 500', async () => {
+    const pagina = fixture.nativeElement as HTMLElement;
+    const municipio = pagina.querySelector<HTMLSelectElement>('[name="municipioCodigoIbge"]')!;
+    municipio.selectedIndex = 1;
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ title: 'Erro interno.', detail: 'System.Exception em algum lugar' }),
+    } as Response);
+    const formulario = pagina.querySelector('form')!;
+
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    formulario.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(pagina.textContent).toContain('Ocorreu um erro inesperado');
+    expect(pagina.textContent).not.toContain('System.Exception');
   });
 });

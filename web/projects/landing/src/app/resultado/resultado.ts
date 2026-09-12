@@ -4,6 +4,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { configurarMetaSemOpenGraph } from '../metadados';
 import {
   DesfechoCapturaLead,
+  mensagemDeErroPublico,
   obterSessaoFunilId,
   PublicoApiService,
   SimulacaoPublica,
@@ -60,9 +61,9 @@ export class Resultado implements OnInit {
     this.api
       .capturarLead(this.route.snapshot.paramMap.get('id')!, dados)
       .then(({ desfecho }) => this.desfecho.set(desfecho))
-      .catch(() => {
+      .catch((erro) => {
         this.enviando.set(false);
-        this.erroContato.set('Não foi possível enviar agora. Seus dados continuam aqui.');
+        this.erroContato.set(`${mensagemDeErroPublico(erro)} Seus dados continuam aqui.`);
       });
   }
 }

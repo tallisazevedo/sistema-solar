@@ -15,7 +15,7 @@ using SolarES.Infraestrutura.Persistencia;
 namespace SolarES.Api.Tests;
 
 /// <summary>Troca o SolarESDbContext (Npgsql) por EF InMemory -- os testes de API nao precisam de Postgres rodando.</summary>
-public sealed class SolarESApiFactory : WebApplicationFactory<Program>
+public class SolarESApiFactory : WebApplicationFactory<Program>
 {
     public const string DonoEmail = "dono@teste.solares";
     public const string DonoSenha = "SenhaDono!123";

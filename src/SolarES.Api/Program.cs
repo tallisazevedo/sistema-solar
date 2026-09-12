@@ -3,6 +3,7 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SolarES.Api;
@@ -26,7 +27,31 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var erros = context.ModelState
+                .Where(par => par.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    par => MensagensValidacao.Humanizar(par.Key),
+                    par => par.Value!.Errors.Select(erro => MensagensValidacao.Traduzir(erro.ErrorMessage)).ToArray());
+
+            var problemDetails = new ValidationProblemDetails(erros)
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Um ou mais campos sao invalidos.",
+            };
+            problemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
+
+            return new ObjectResult(problemDetails)
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                ContentTypes = { "application/problem+json" },
+            };
+        };
+    });
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddCors(options => options.AddPolicy("Landing", policy =>
@@ -124,7 +149,12 @@ builder.Services.AddAuthorization(options =>
         .Build());
 
 builder.Services.AddExceptionHandler<ExcecaoDeValidacaoDominioHandler>();
-builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<FallbackExceptionHandler>();
+builder.Services.AddProblemDetails(options =>
+{
+    options.CustomizeProblemDetails = context =>
+        context.ProblemDetails.Extensions.TryAdd("traceId", context.HttpContext.TraceIdentifier);
+});
 
 var app = builder.Build();
 
@@ -152,6 +182,16 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Endpoint so existe no ambiente de teste de API (SolarESApiFactoryNaoDevelopment) -- da'
+// ao FallbackExceptionHandler uma excecao nao mapeada para verificar, fora de
+// Development, que o corpo do 500 nunca vaza stack trace ou nome de classe.
+if (app.Environment.IsEnvironment("Testing"))
+{
+    app.MapGet("/api/_diagnosticos/erro-nao-tratado", IResult () =>
+        throw new NotSupportedException("Erro deliberado para teste de ProblemDetails."))
+        .AllowAnonymous();
+}
 
 // AllowAnonymous: sem isso, o FallbackPolicy (RequireAuthenticatedUser, pensado pra
 // API JWT) intercepta a requisicao do dashboard antes do

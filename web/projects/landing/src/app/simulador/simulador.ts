@@ -2,7 +2,12 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { configurarMetaSemOpenGraph } from '../metadados';
-import { MunicipioPublico, obterSessaoFunilId, PublicoApiService } from '../publico-api.service';
+import {
+  MunicipioPublico,
+  mensagemDeErroPublico,
+  obterSessaoFunilId,
+  PublicoApiService,
+} from '../publico-api.service';
 
 @Component({
   selector: 'app-simulador',
@@ -57,7 +62,7 @@ export class Simulador implements OnInit {
     this.api
       .listarMunicipios()
       .then((municipios) => this.municipios.set(municipios))
-      .catch(() => this.erro.set('Não foi possível carregar os municípios. Tente novamente.'));
+      .catch((erro) => this.erro.set(mensagemDeErroPublico(erro)));
   }
 
   protected atualizarBusca(event: Event): void {
@@ -104,11 +109,9 @@ export class Simulador implements OnInit {
         sessaoFunilId: this.sessaoFunilId,
       })
       .then(({ id }) => this.router.navigate(['/resultado', id]))
-      .catch(() => {
+      .catch((erro) => {
         this.enviando.set(false);
-        this.erro.set(
-          'Não foi possível calcular agora. Seus dados continuam aqui para tentar novamente.',
-        );
+        this.erro.set(`${mensagemDeErroPublico(erro)} Seus dados continuam aqui para tentar novamente.`);
       });
   }
 

@@ -16,7 +16,19 @@ public sealed class AutenticacaoController(AutenticacaoAppService servico) : Con
         var resultado = await servico.LoginAsync(request.Email, request.Senha, ct);
         if (!resultado.Sucesso)
         {
-            return Unauthorized();
+            var problemDetails = new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Credenciais invalidas.",
+                Detail = "E-mail ou senha incorretos.",
+            };
+            problemDetails.Extensions["traceId"] = HttpContext.TraceIdentifier;
+
+            return new ObjectResult(problemDetails)
+            {
+                StatusCode = StatusCodes.Status401Unauthorized,
+                ContentTypes = { "application/problem+json" },
+            };
         }
 
         return Ok(new LoginResponse(resultado.Token!, resultado.Usuario!.Nome, resultado.Usuario.Perfil));
