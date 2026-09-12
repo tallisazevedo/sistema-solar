@@ -1,15 +1,18 @@
 using System.Text.Json;
+using Hangfire;
 using SolarES.Aplicacao.Configuracao;
 using SolarES.Aplicacao.Propostas;
 using SolarES.Aplicacao.Simulacoes;
 using SolarES.Dominio.Configuracao;
 using SolarES.Dominio.Lead;
+using SolarES.Dominio.Proposta;
 using SolarES.Dominio.Simulacao;
 
 namespace SolarES.Aplicacao.Leads;
 
 public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository simulacoes,
     IConfiguracaoVersaoRepository configuracoes, PropostaAppService propostas,
+    EnvioPropostaAppService envios, IBackgroundJobClient jobs,
     IArmazenamentoAnexoConta armazenamentoAnexos, ConfiguracaoConsentimentos configuracaoConsentimentos,
     TimeProvider relogio)
 {
@@ -47,7 +50,16 @@ public sealed class LeadAppService(ILeadRepository leads, ISimulacaoRepository s
             ?? throw new InvalidOperationException("Versão da configuração não encontrada.");
         if (simulacao.RoteadaParaHumano) return DesfechoCapturaLead.RoteadoParaHumano;
         if (versao.Payload.PossuiPremissaProvisoria()) return DesfechoCapturaLead.CalibracaoPendente;
-        await propostas.GerarAsync(simulacao.Id, ct);
+        var (proposta, jobIdGeracaoPdf) = await propostas.GerarComJobIdAsync(simulacao.Id, ct);
+
+        // Envio automatico pelo canal escolhido na landing -- mesma guarda de
+        // calibracao do envio manual do admin, mas o disparo em si e' uma
+        // continuacao do job de geracao do PDF (so' roda depois que o PDF existir).
+        var canalEnvio = canal == CanalPreferido.Email ? CanalEnvio.Email : CanalEnvio.Whatsapp;
+        var destino = canal == CanalPreferido.Email ? email : telefone;
+        var envio = await envios.PrepararEnvioAsync(proposta.Id, canalEnvio, destino, ct);
+        jobs.ContinueJobWith<EnviarPropostaJob>(jobIdGeracaoPdf, job => job.ExecutarAsync(envio.Id, CancellationToken.None));
+
         return DesfechoCapturaLead.PropostaEmitida;
     }
 

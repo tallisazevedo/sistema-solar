@@ -11,6 +11,7 @@ using SolarES.Dominio.Tarifas;
 using SolarES.Dominio.Lead;
 using SolarES.Aplicacao.Leads;
 using SolarES.Dominio.Premissas;
+using SolarES.Dominio.Proposta;
 using SolarES.Infraestrutura.Persistencia;
 
 namespace SolarES.Api.Tests;
@@ -174,6 +175,10 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         Assert.Equal(FinalidadeConsentimento.ContatoComercial, consentimento.Finalidade);
         Assert.Equal("contato-comercial-v1", consentimento.VersaoTexto);
         Assert.Equal(leadCriado.ConsentimentoLgpdEm, consentimento.ConcedidoEm);
+        // Nenhuma Proposta foi criada pra esta simulacao -- e como EnvioProposta so
+        // existe a partir de uma Proposta ja' persistida, isso ja' prova que nenhum
+        // envio foi enfileirado (o teste nao pode checar a tabela inteira: ela e'
+        // compartilhada entre os testes desta classe).
         Assert.DoesNotContain(await contexto.Propostas.ToListAsync(), proposta => proposta.SimulacaoId == simulacao.Id);
     }
 
@@ -235,6 +240,8 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
         Assert.Equal(nameof(DesfechoCapturaLead.RoteadoParaHumano), resultado!.Desfecho);
         using var escopo = _factory.Services.CreateScope();
         var contexto = escopo.ServiceProvider.GetRequiredService<SolarESDbContext>();
+        // Idem: sem Proposta pra esta simulacao, nenhum envio pode ter sido
+        // enfileirado (ver comentario equivalente no teste de calibracao pendente).
         Assert.DoesNotContain(await contexto.Propostas.ToListAsync(), proposta => proposta.SimulacaoId == simulacao.Id);
     }
 
@@ -276,6 +283,23 @@ public sealed class SimulacoesPublicasApiTests : IClassFixture<SolarESApiFactory
             pdfGerado = propostaCriada.ArquivoPdfUrl is not null;
         }
         Assert.True(pdfGerado, "O job assíncrono não gerou o PDF da proposta.");
+
+        // T25.3: captura com PropostaEmitida enfileira o envio automatico pelo canal
+        // preferido do lead, como continuacao da geracao do PDF.
+        var envioEnviado = false;
+        EnvioProposta? envioCriado = null;
+        for (var tentativa = 0; tentativa < 25 && !envioEnviado; tentativa++)
+        {
+            await Task.Delay(200);
+            envioCriado = await banco.EnviosProposta.SingleOrDefaultAsync(e => e.PropostaId == propostaCriada.Id);
+            envioEnviado = envioCriado?.Status == StatusEnvioProposta.Enviado;
+        }
+        Assert.True(envioEnviado, "O envio automatico nao foi concluido a tempo.");
+        Assert.Equal(CanalEnvio.Email, envioCriado!.Canal);
+        Assert.Equal("maria@exemplo.com", envioCriado.Destino);
+        var propostaAtualizada = await banco.Propostas.SingleAsync(p => p.Id == propostaCriada.Id);
+        Assert.NotNull(propostaAtualizada.EnviadaEm);
+
         var publicada = await banco.ConfiguracoesVersao.SingleAsync(c => c.Status == StatusConfiguracaoVersao.Publicada);
         publicada.Arquivar();
         var baseline = ConfiguracaoVersao.CriarRascunho(publicada.Numero + 1, ConfiguracaoCalculoBaseline.Criar(), "Teste");

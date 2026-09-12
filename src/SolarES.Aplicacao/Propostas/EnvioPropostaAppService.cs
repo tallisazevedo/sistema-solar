@@ -16,6 +16,19 @@ public sealed class EnvioPropostaAppService(
 {
     public async Task<EnvioProposta> SolicitarEnvioAsync(Guid propostaId, CanalEnvio canal, string destino, CancellationToken ct)
     {
+        var envio = await PrepararEnvioAsync(propostaId, canal, destino, ct);
+        // So enfileira -- quem envia de fato e' o EnviarPropostaJob (retry do Hangfire).
+        jobs.Enqueue<EnviarPropostaJob>(job => job.ExecutarAsync(envio.Id, CancellationToken.None));
+        return envio;
+    }
+
+    /// <summary>
+    /// Mesma guarda e criacao do EnvioProposta, mas sem enfileirar o envio -- quem
+    /// precisa encadear como continuacao de outro job (T25.3: envio automatico,
+    /// continuacao da geracao do PDF) decide quando e como disparar.
+    /// </summary>
+    public async Task<EnvioProposta> PrepararEnvioAsync(Guid propostaId, CanalEnvio canal, string destino, CancellationToken ct)
+    {
         var proposta = await propostaRepositorio.ObterPorIdAsync(propostaId, ct)
             ?? throw new KeyNotFoundException("Proposta não encontrada.");
         await GarantirSemCalibracaoPendenteAsync(proposta, ct);
@@ -23,9 +36,6 @@ public sealed class EnvioPropostaAppService(
         var envio = EnvioProposta.Criar(proposta.Id, canal, destino, relogio.GetUtcNow());
         enviosRepositorio.Adicionar(envio);
         await enviosRepositorio.SalvarAlteracoesAsync(ct);
-
-        // So enfileira -- quem envia de fato e' o EnviarPropostaJob (retry do Hangfire).
-        jobs.Enqueue<EnviarPropostaJob>(job => job.ExecutarAsync(envio.Id, CancellationToken.None));
         return envio;
     }
 

@@ -17,6 +17,16 @@ public sealed class PropostaAppService(
 {
     public async Task<PropostaEntidade> GerarAsync(Guid simulacaoId, CancellationToken ct)
     {
+        var (proposta, _) = await GerarComJobIdAsync(simulacaoId, ct);
+        return proposta;
+    }
+
+    /// <summary>
+    /// Mesma geracao, mas devolve tambem o id do job de PDF enfileirado -- quem
+    /// precisa encadear uma continuacao (T25.3: envio automatico) usa esse id.
+    /// </summary>
+    public async Task<(PropostaEntidade Proposta, string JobIdGeracaoPdf)> GerarComJobIdAsync(Guid simulacaoId, CancellationToken ct)
+    {
         var simulacao = await simulacaoRepositorio.ObterPorIdAsync(simulacaoId, ct)
             ?? throw new InvalidOperationException("Simulacao nao encontrada.");
 
@@ -44,9 +54,9 @@ public sealed class PropostaAppService(
 
         // So enfileira -- o metodo devolve antes do PDF existir, entao o POST nunca
         // espera a geracao (aceite da T21: "geracao nao bloqueia request").
-        jobs.Enqueue<GerarPdfPropostaJob>(job => job.ExecutarAsync(proposta.Id, CancellationToken.None));
+        var jobId = jobs.Enqueue<GerarPdfPropostaJob>(job => job.ExecutarAsync(proposta.Id, CancellationToken.None));
 
-        return proposta;
+        return (proposta, jobId);
     }
 
     public Task<IReadOnlyList<PropostaEntidade>> ListarAsync(StatusProposta? status, CancellationToken ct) =>
